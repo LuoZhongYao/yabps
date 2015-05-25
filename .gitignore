@@ -30,3 +30,13 @@
 
 # Debug files
 *.dSYM/
+obj/
+libs/
+
+# global
+GPATH  
+GRTAGS
+GTAGS
+
+# youcompleteme
+.ycm_extra_conf.py

@@ -1,0 +1,29 @@
+abcsp - another bcsp stack
+==========================
+
+This implementation of bcsp is biased towards embedded environments; it uses
+resources fairly frugally.  The consequent price is the need to integrate the
+code closely with its environment, i.e., the code's operation and many
+interfaces have to be well understood.
+
+The primary reference for using abcsp is CSR document bc01-me-038.
+
+The code was developed on unix.  This is reflected by the the Makefiles and
+test programs.
+
+
+config/   Directory holdling #include files that must be configured to
+          match the local environment.
+
+include   Directory holdling #include files that will not normally need
+          to be configured to match the local environment.
+
+src/      Directory holding sources of abcsp itself.  Disregarding the
+          inevitable tiresome bugs, these files normally can be left alone.
+
+make/     Common configuration files used by the Makefiles.
+
+
+cjo 28:sep:01
+
+$Id: README,v 1.2 2001/09/28 15:28:03 cjo Exp $

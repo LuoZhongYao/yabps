@@ -1,0 +1,6 @@
+This directory contains #include files that bind the abcsp code to its
+environment.  These files will probably not have to be adjusted for each
+application.
+
+cjo
+6:jul:01

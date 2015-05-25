@@ -1,0 +1,33 @@
+Version 1 of abcsp published on the CSR external web site approx. Sept. 2001.
+
+============================================================================
+
+Version 1.1 (CVS label abcsp-1p1) provided for publication on the web
+site 18 June 2002.
+
+Changes between version 1 and version 1.1:
+
+ID AB.1  Added support for new version of BCSP-LE protocol, described in
+bc01-s-010g.  This is believed to be backwards compatible with bc0x HCI
+firmware builds since (at least) beta-10.  A #define can restore the old
+version of BCSP-LE.  The new version of BCSP-LE is in HCI 15.X builds.
+
+ID AB.2 Fix for bug - acknowledge reception of all reliable packets, not just
+those that are currently expected.
+
+ID AB.3 Fix for irritation (not really a bug) - don't report CRC failures on
+received reliable packets with the wrong seq number.
+
+ID AB.4 Fix for bug - if an attempt is made to write a tx packet's CRC at the
+same time as the tx uart buffer fills then the tx packet may eventually be
+sent with its CRC bit order reversed.
+
+============================================================================
+
+Version 1.2 (CVS label abcsp-1p2) provided for publication on the web
+site 20 February 2003.
+
+ID AB.5 Corrected comment advising normal periods for Tshy and Tconf.  
+Changed from 2s to 250ms.
+
+ID AB.6 Corrected calculation of BCSP header checksum in txmsg.c.

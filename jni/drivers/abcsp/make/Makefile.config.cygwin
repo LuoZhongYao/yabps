@@ -1,0 +1,34 @@
+# replace Makefile.config with this file when running under cygwin
+# $Id: Makefile.config.cygwin,v 1.1 2001/07/30 15:13:25 sm Exp $
+
+COMMON_DEFINES = -DABCSP_TEST
+
+MAKEDEFINES=$(COMMON_DEFINES)
+
+.SUFFIXES: $(SUFFIXES)
+
+SHELL = /bin/bash
+
+INCLUDES = -I. -I$(TOP)/abcsp/include -I$(TOP)/abcsp/src -I$(TOP)/abcsp/config
+
+CC = gcc -Wall -Wpointer-arith -Wno-switch
+# CC = /opt/SUNWspro/bin/cc
+# CFLAGS += -O
+CFLAGS += -g
+CPPFLAGS += $(MAKEDEFINES) $(INCLUDES)
+LINT = /opt/SUNWspro/bin/lint
+# LINT = touch
+LINTFLAGS = $(XMAKEDEFINES)
+
+
+LORDER = 
+#LORDER = lorder
+TSORT = tsort
+RANLIB = touch
+MAKEDEPEND = makedepend
+CHMOD = chmod
+CP = cp
+TOUCH = touch
+MKDIR = mkdir -p
+CAT = cat
+MV = mv

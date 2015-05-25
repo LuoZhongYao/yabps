@@ -1,0 +1,56 @@
+# $Id: Makefile.targets,v 1.2 2001/07/30 15:10:56 sm Exp $ 
+
+all:: $(LIB)
+
+LIB_HEADERS=$(LIB_PUBLIC_HEADERS) $(LIB_PRIVATE_HEADERS)
+
+ALL_INCS=$(LIB_INCS) 
+
+BLD_INCS=$(ALL_INCS:%=$(BUILDNAME)/%) 
+BLD_LIBNAME=$(LIBNAME:%=%/$(BUILDNAME))
+
+# This probably isn't used any more.
+LIB_OBJECTS=$(LIB_SOURCES:.c=.o)
+
+LIBLINT = $(LIB).lint
+XLIBLINT = llib-l$(LIBNAME).ln
+
+
+# Keep make happy by creating dummy library if necessary.
+$(LIB): $(LIB_OBJECTS) $(LIB_XTRA_DEPS)
+	if [ "x$(LIBNAME)" != xnone -a "x$(LIB_OBJECTS)" != x ]; then \
+	  $(RM) $@; \
+	  $(AR) -cr $@ `$(LORDER) $(LIB_OBJECTS) | $(TSORT)`; \
+	  $(RANLIB) $@; \
+	else \
+	  touch $(LIB); \
+	fi
+
+clean::
+	-$(RM) $(LIB_OBJECTS) $(LIBLINT) core Makefile.bak Makefile.tmp \
+		 $(XTRA_CLEAN) $(XLIBLINT)
+
+nuke::
+
+depend:: $(LIB_SOURCES) $(LIB_HEADERS) $(XTRA_DEPENDS)
+	if [ "x$(LIB_SOURCES)" != x ]; then \
+	  $(MAKEDEPEND) -w1 -- $(CPPFLAGS) $(CFLAGS) -- $(LIB_SOURCES) \
+		$(XTRA_DEPENDS); \
+	fi
+
+
+lint:: $(LIBLINT) $(XLIBLINT)
+
+$(XLIBLINT) $(LIBLINT): $(LIB_SOURCES) $(LIB_HEADERS)
+	-if [ "x$(LIB_SOURCES)" != x ]; then \
+	 $(LINT) $(LINTFLAGS) $(CPPFLAGS) $(CFLAGS) $(LIB_SOURCES) \
+		-o $(LIBNAME) > $@ 2>&1; \
+	else \
+	touch $(XLIBLINT) $(LIBLINT) ; \
+	fi
+
+
+# This is a catchall for outputting stuff from the Makefile.  ECHO_ARGUMENTS
+# should be set on the make command line.
+echo::
+	@echo $(ECHO_ARGUMENTS)

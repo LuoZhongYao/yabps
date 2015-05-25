@@ -1,0 +1,6 @@
+The C source code of the abcsp library.  Most applications will not have to
+change these files.
+
+cjo
+6:jul:01
+$Id: README,v 1.1 2001/07/06 19:15:28 cjo Exp $

@@ -1,0 +1,9 @@
+This directory contains files that must be configured to map the abcsp
+code to its environment.
+
+It would probably be neatest to introduce a fresh #define, in the manner
+of BCSP_TEST, for the local application.
+
+cjo
+6:jul:01
+$Id: README,v 1.1 2001/07/06 20:10:21 cjo Exp $
