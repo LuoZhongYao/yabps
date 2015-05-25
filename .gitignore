@@ -41,4 +41,4 @@ GTAGS
 # youcompleteme
 .ycm_extra_conf.py
 
-!./jni/arch/rda/5876/libauth.a
+!jni/arch/rda/5876/libauth.a
