@@ -95,9 +95,9 @@ static const char abcsp_h_id[]
 #endif
 
 typedef struct {
-    char     *buf;
-    unsigned buflen;
-    unsigned dex;
+    char *buf;
+    unsigned   buflen;
+    unsigned   dex;
 }MessageStructure;
 
 
@@ -278,6 +278,7 @@ FUNCTION
 	transmitted BCSP messages.  */
 
 extern void abcsp_bcsp_timed_event(void);
-
-
+#include <drv.h>
+drv_t *new_abcsp(drv_t *top);
+drv_t *delete_abcsp(drv_t *drv);
 #endif  /* __ABCSP_H__ */

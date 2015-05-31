@@ -124,7 +124,7 @@ FUNCTION
 	the abcsp library passes all control of the message back to external
 	code.
 */
-#define ABCSP_DELIVERMSG(m,c,r)	//hcCom_ReceiveMsg(m, c, r)
+#define ABCSP_DELIVERMSG(m,c,r)	abscp_uart_receiv(m,c) //hcCom_ReceiveMsg(m, c, r)
 
 /****************************************************************************
 NAME

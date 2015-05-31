@@ -99,6 +99,7 @@ RETURNS
         "t", or NULL if it could not be obtained.
 */
 
+#undef NEW
 #define NEW(t)          ((t*)(MALLOC(sizeof(t)))
 
 
@@ -173,7 +174,7 @@ FUNCTION
         This macro wrapping of FREE() allows the caller to be careless
         of the type of the memory returned.
 */
-
+#undef DELETE
 #define DELETE(p)       (FREE((void*)(p)))
 
 

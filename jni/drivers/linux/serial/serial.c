@@ -12,11 +12,22 @@
 #include <zl/types.h>
 #include <assert.h>
 #include <zl/util.h>
+#include <pthread.h>
 
 struct srl_t{
     drv_t drv;
     int fd;
 };
+
+static int printx(const char *promt,const u8 *x,size_t n) {
+    static char buffer[1024];
+    int l = sprintf(buffer,"%s(%02x) : ",promt,n);
+    for(size_t i = 0;i < n && i < 1024;i++)
+        l += sprintf(buffer + l,"%02x ",x[i]);
+    LOGD("%s\n",buffer);
+    return 0;
+}
+
 
 static int srl_configure(drv_t *__drv,speed_t rate) {
     struct srl_t *srl = container_of(__drv,struct srl_t,drv);
@@ -58,13 +69,9 @@ static int srl_configure(drv_t *__drv,speed_t rate) {
     return 0;
 }
 
-static int srl_start(drv_t *__drv) {
+static int srl_write(drv_t *__drv,int ch,const void *__buffer,size_t __n) {
     struct srl_t *srl = container_of(__drv,struct srl_t,drv);
-    return 0;
-}
-
-static int srl_write(drv_t *__drv,const void *__buffer,size_t __n) {
-    struct srl_t *srl = container_of(__drv,struct srl_t,drv);
+    printx("TX",__buffer,__n);
     if(srl->fd > 0)
         return write(srl->fd,__buffer,__n);
     errno = -ENOENT;
@@ -86,7 +93,42 @@ static int srl_close(drv_t *__drv) {
     return 0;
 }
 
-drv_t *linux_serial(const char *path) {
+static void* drv_reader(void *__prv) {
+    static u8 buffer[1024];
+    drv_t *drv = __prv;
+    struct srl_t *srl = container_of(drv,struct srl_t,drv);
+    int len;
+
+    LOGD("drv_reader");
+    while(1) {
+        len = read(srl->fd,buffer,sizeof(buffer));
+        if(len > 0) {
+            int l = 0;
+            printx("RX",buffer,len);
+            while(l < len) {
+                int il = drv_receiv(drv->top,buffer + l,len - l);
+                if(il > 0)
+                    l += il;
+                else
+                    break;
+            }
+        } else {
+            LOGE("%s",strerror(errno));
+        }
+    }
+    return NULL;
+}
+
+static int srl_start(drv_t *__drv) {
+    //struct srl_t *srl = container_of(__drv,struct srl_t,drv);
+    pthread_t pid;
+    pthread_create(&pid,NULL,drv_reader,__drv);
+    return 0;
+}
+
+
+
+drv_t *linux_serial(const char *path,drv_t *top) {
     struct srl_t *srl = __new(struct srl_t);
     assert(srl != NULL);
     assert(path != NULL);
@@ -97,9 +139,9 @@ drv_t *linux_serial(const char *path) {
         return NULL;
     }
     srl->drv.configure = srl_configure;
-    srl->drv.write = srl_write;
-    srl->drv.read = srl_read;
+    srl->drv.send = srl_write;
     srl->drv.start = srl_start;
     srl->drv.close = srl_close;
+    srl->drv.top = top;
     return &(srl->drv);
 }
