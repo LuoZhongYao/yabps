@@ -8,15 +8,15 @@
 #include "drv.h"
 #include "hci.h"
 #include "zl/types.h"
-extern drv_t *linux_serial(const char *path,drv_t *top);
-drv_t *drv,*abcsp,*hci;
+extern drv_t *linux_serial(const char *path);
+drv_t *srl,*abcsp,*hci;
 
 static void usage(const char *cmd) {
     LOGE("Usage : %s devices\n",cmd);
 }
 
 int abcsp_uart_sendbytes(void *__buffer,size_t __n) {
-    return drv_send(drv,0,__buffer,__n);
+    return drv_send(srl,0,__buffer,__n);
 }
 
 void *abcsp_uart_gettxbuf(size_t *__n) {
@@ -27,7 +27,7 @@ void *abcsp_uart_gettxbuf(size_t *__n) {
 
 extern void abscp_uart_receiv(MessageStructure *src,unsigned channel)
 {
-    drv_receiv(hci,src->buf,0);
+    drv_receiv(hci,channel,src->buf,0);
 }
 
 int main(int argc,char **argv) {
@@ -36,10 +36,24 @@ int main(int argc,char **argv) {
         return -1;
     }
     rdabt_poweron_init(argv[1]);
-    hci = NEW(hci,NULL);
-    abcsp = new_abcsp(hci);
-    drv = linux_serial(argv[1],abcsp);
-    drv_configure(drv,B500000);
+    /*********** new ********************/
+    hci = new_hci();
+    abcsp = new_abcsp();
+    srl = linux_serial(argv[1]);
+    drv_configure(srl,B500000);
+    /************ ***********************/
+    drv_client(hci,NULL);
+    drv_server(hci,abcsp);
+
+    drv_client(abcsp,hci);
+    drv_server(abcsp,srl);
+
+    drv_server(srl,NULL);
+    drv_client(srl,abcsp);
+    /************************************/
+    drv_start(srl);
+    drv_start(abcsp);
+    drv_start(hci);
     while(1) 
         sleep(1);
     /*************************************************/

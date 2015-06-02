@@ -319,7 +319,16 @@ enum {
     HCI_EVENT,
 };
 
+typedef struct hci_command_t hci_command_t;
+typedef hci_command_t   hci_read_buffer_size_t;
 typedef struct hci_event_t hci_event_t;
+
+struct hci_command_t {
+    u16     op_code;
+    u8      param_length;
+    u8      params[0];
+}__packed;
+
 struct hci_event_t {
     u8      event_code;
     u8      param_length;
@@ -341,8 +350,8 @@ typedef struct {
     u16         op_code;
 }__packed hci_ev_command_status_t;
 
-drv_t *new_hci(drv_t *top);
-drv_t *delete_hci(drv_t *hci);
+drv_t *new_hci(void);
+void delete_hci(drv_t *hci);
 
 __END_DECLS
 #endif

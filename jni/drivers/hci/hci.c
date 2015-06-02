@@ -8,7 +8,7 @@ typedef void (*ch_route_t)(hci_impl_t *impl,void *data);
 typedef void (*event_handler_t)(hci_impl_t *impl,hci_event_t *event);
 
 struct hci_impl_t {
-    drv_t hci;
+    drv_t hci,*server,*client;
     event_handler_t event_handlers[HCI_MAX_EVENT_OPCODE];
     ch_route_t channel_route[CHANNEL_VM];
 };
@@ -16,15 +16,19 @@ struct hci_impl_t {
 static void hci_ev_command_complete(hci_impl_t *impl,hci_event_t *ev)
 {
     hci_ev_command_complete_t *msg = (hci_ev_command_complete_t *)ev;
-    LOGD("pkts number %d,op_code %d,status %d",msg->num_hci_command_pkts,
+    LOGD("pkts number %d,op_code %x,status %d",msg->num_hci_command_pkts,
             msg->op_code,msg->status);
 }
 
 static void hci_ev_command_status(hci_impl_t *impl,hci_event_t *ev)
 {
     hci_ev_command_status_t *msg = (hci_ev_command_status_t *)ev;
-    LOGD("status %d,pkts number %d,op_code %d",msg->status,
+    hci_read_buffer_size_t *cmd = __new(hci_read_buffer_size_t);
+    cmd->op_code = HCI_READ_BUFFER_SIZE;
+    LOGD("status %d,pkts number %d,op_code %x",msg->status,
             msg->num_hci_command_pkts,msg->op_code);
+    //drv_send((&(impl->hci)),CHANNEL_HCI,&cmd,sizeof(cmd));
+    drv_send(impl->server,CHANNEL_HCI,cmd,sizeof(*cmd));
 }
 
 static void __hci_event(hci_impl_t *impl,struct hci_event_t *event)
@@ -220,7 +224,7 @@ static void __hci_event(hci_impl_t *impl,struct hci_event_t *event)
     }
 }
 
-static  int __receiv(drv_t *hci,transport_channel_t channel,void *msg)
+static  int __receiv(drv_t *hci,transport_channel_t channel,void *msg,size_t nlen __unused)
 {
     hci_impl_t *impl = container_of(hci,hci_impl_t,hci);
 #ifdef HCI_DEBUG
@@ -254,8 +258,10 @@ static  int __receiv(drv_t *hci,transport_channel_t channel,void *msg)
     return 0;
 }
 
-static int __send(drv_t *hci,transport_channel_t channel,void *msg,size_t mlen)
+static int __send(drv_t *hci,transport_channel_t channel,const void *msg,size_t mlen)
 {
+    hci_impl_t *impl = container_of(hci,hci_impl_t,hci);;
+    drv_send(impl->client,channel,msg,mlen);
     return 0;
 }
 
@@ -293,7 +299,7 @@ static int __register_route(drv_t *hci,transport_channel_t ch ,ch_route_t handle
     return -EINVAL;
 }
 
-static int __register_handler(drv_t *hci,int type,int idx,void *handle)
+static int __external(drv_t *hci,int type,int idx,void *handle)
 {
     switch(type) {
     case HCI_CHANNEL:
@@ -306,15 +312,29 @@ static int __register_handler(drv_t *hci,int type,int idx,void *handle)
     return -ENOSYS;
 }
 
+static int __server(drv_t *__drv,drv_t *__server)
+{
+    hci_impl_t *hci = container_of(__drv, hci_impl_t,hci);
+    hci->server = __server;
+    return 0;
+}
 
-drv_t *new_hci(drv_t *top)
+static int __client(drv_t *__drv,drv_t *__client)
+{
+    hci_impl_t *hci = container_of(__drv, hci_impl_t,hci);
+    hci->server = __client;
+    return 0;
+}
+
+drv_t *new_hci(void)
 {
     hci_impl_t *impl = __new(hci_impl_t);
     assert(impl != NULL);
     impl->hci.send   = __send;
     impl->hci.receiv = __receiv;
-    impl->hci.top = top;
-    impl->hci._register = __register_handler;
+    impl->hci.client = __client;
+    impl->hci.server = __server;
+    impl->hci.external = __external;
     for(int i = 0;i < HCI_MAX_EVENT_OPCODE;i++)
         impl->event_handlers[i] = __hci_event_unhandler;
 
@@ -326,10 +346,7 @@ drv_t *new_hci(drv_t *top)
     return &(impl->hci);
 }
 
-drv_t *delete_hci(drv_t *hci)
+void delete_hci(drv_t *hci)
 {
-    drv_t *top;
-    top = hci->top;
     delete(hci);
-    return top;
 }

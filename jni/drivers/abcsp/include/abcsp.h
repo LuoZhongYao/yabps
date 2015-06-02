@@ -279,6 +279,6 @@ FUNCTION
 
 extern void abcsp_bcsp_timed_event(void);
 #include <drv.h>
-drv_t *new_abcsp(drv_t *top);
-drv_t *delete_abcsp(drv_t *drv);
+drv_t *new_abcsp(void);
+void delete_abcsp(drv_t *drv);
 #endif  /* __ABCSP_H__ */

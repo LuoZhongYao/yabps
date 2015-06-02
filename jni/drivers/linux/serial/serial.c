@@ -13,10 +13,16 @@
 #include <assert.h>
 #include <zl/util.h>
 #include <pthread.h>
+#include <stdbool.h>
 
 struct srl_t{
-    drv_t drv;
+    drv_t drv,*server,*client;
     int fd;
+    enum{
+        SRL_RUNNING,
+        SRL_STOPING,
+    }status;
+    bool running;
 };
 
 static int printx(const char *promt,const u8 *x,size_t n) {
@@ -69,7 +75,7 @@ static int srl_configure(drv_t *__drv,speed_t rate) {
     return 0;
 }
 
-static int srl_write(drv_t *__drv,int ch,const void *__buffer,size_t __n) {
+static int srl_write(drv_t *__drv,transport_channel_t ch,const void *__buffer,size_t __n) {
     struct srl_t *srl = container_of(__drv,struct srl_t,drv);
     printx("TX",__buffer,__n);
     if(srl->fd > 0)
@@ -95,18 +101,18 @@ static int srl_close(drv_t *__drv) {
 
 static void* drv_reader(void *__prv) {
     static u8 buffer[1024];
-    drv_t *drv = __prv;
-    struct srl_t *srl = container_of(drv,struct srl_t,drv);
+    struct srl_t *srl = __prv;
     int len;
 
-    LOGD("drv_reader");
-    while(1) {
+    LOGD("srl reader");
+    srl->status = SRL_RUNNING;
+    while(srl->running) {
         len = read(srl->fd,buffer,sizeof(buffer));
         if(len > 0) {
             int l = 0;
             printx("RX",buffer,len);
             while(l < len) {
-                int il = drv_receiv(drv->top,buffer + l,len - l);
+                int il = drv_receiv(srl->client,-1,buffer + l,len - l);
                 if(il > 0)
                     l += il;
                 else
@@ -116,22 +122,45 @@ static void* drv_reader(void *__prv) {
             LOGE("%s",strerror(errno));
         }
     }
+    srl->status = SRL_STOPING;
     return NULL;
 }
 
 static int srl_start(drv_t *__drv) {
-    //struct srl_t *srl = container_of(__drv,struct srl_t,drv);
+    struct srl_t *srl = container_of(__drv,struct srl_t,drv);
     pthread_t pid;
-    pthread_create(&pid,NULL,drv_reader,__drv);
+    srl->running = true;
+    pthread_create(&pid,NULL,drv_reader,srl);
     return 0;
 }
 
+static void srl_top(drv_t *__drv)
+{
+    struct srl_t *srl = container_of(__drv,struct srl_t,drv);
+    srl->running = false;
+    while(srl->status == SRL_STOPING) 
+        usleep(100);
+}
 
+static int srl_client(drv_t *__drv,drv_t *client)
+{
+    struct srl_t *srl = container_of(__drv,struct srl_t,drv);
+    srl->client = client;
+    return 0;
+}
 
-drv_t *linux_serial(const char *path,drv_t *top) {
+static int srl_server(drv_t *__drv,drv_t *server)
+{
+    struct srl_t *srl = container_of(__drv,struct srl_t,drv);
+    srl->server =server;
+    return 0;
+}
+
+drv_t *linux_serial(const char *path) {
     struct srl_t *srl = __new(struct srl_t);
     assert(srl != NULL);
     assert(path != NULL);
+    srl->running = false;
     srl->fd = open(path,O_RDWR | O_NOCTTY);
     if(srl->fd < 0) {
         LOGE("%s %s",path,strerror(errno));
@@ -142,6 +171,7 @@ drv_t *linux_serial(const char *path,drv_t *top) {
     srl->drv.send = srl_write;
     srl->drv.start = srl_start;
     srl->drv.close = srl_close;
-    srl->drv.top = top;
+    srl->drv.server = srl_server;
+    srl->drv.client = srl_client;
     return &(srl->drv);
 }
