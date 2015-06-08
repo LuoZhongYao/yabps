@@ -1,6 +1,6 @@
 #include "zl/log.h"
 #include "arch/rda/5876/rda5876.h"
-#include "drivers/abcsp/include/abcsp.h"
+#include "drivers/hw/abcsp/include/abcsp.h"
 #include <termio.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -8,26 +8,15 @@
 #include "drv.h"
 #include "hci.h"
 #include "zl/types.h"
-extern drv_t *linux_serial(const char *path);
-drv_t *srl,*abcsp,*hci;
+extern int serial_open(const char *path);
+extern int serial_configure();
+extern int serial_write();
+extern void serial_start();
+extern void serial_stop();
+
 
 static void usage(const char *cmd) {
     LOGE("Usage : %s devices\n",cmd);
-}
-
-int abcsp_uart_sendbytes(void *__buffer,size_t __n) {
-    return drv_send(srl,0,__buffer,__n);
-}
-
-void *abcsp_uart_gettxbuf(size_t *__n) {
-    static u8 buffer[1024];
-    *__n = 1024;
-    return buffer;
-}
-
-extern void abscp_uart_receiv(MessageStructure *src,unsigned channel)
-{
-    drv_receiv(hci,channel,src->buf,0);
 }
 
 int main(int argc,char **argv) {
@@ -37,28 +26,13 @@ int main(int argc,char **argv) {
     }
     rdabt_poweron_init(argv[1]);
     /*********** new ********************/
-    hci = new_hci();
-    abcsp = new_abcsp();
-    srl = linux_serial(argv[1]);
-    drv_configure(srl,B500000);
+    serial_open(argv[1]);
+    serial_configure(B500000);
     /************ ***********************/
-    drv_client(hci,NULL);
-    drv_server(hci,abcsp);
-
-    drv_client(abcsp,hci);
-    drv_server(abcsp,srl);
-
-    drv_server(srl,NULL);
-    drv_client(srl,abcsp);
-    /************************************/
-    drv_start(srl);
-    drv_start(abcsp);
-    drv_start(hci);
+    serial_start();
+    abcsp_init();
     while(1) 
         sleep(1);
-    /*************************************************/
-
-    delete_abcsp(abcsp);
-    delete_hci(hci);
+    serial_stop();
     return 0;
 }

@@ -147,6 +147,13 @@ RETURNS
         returned is written to the location pointed to by "bufsiz".
 */
 
+//abcsp_uart_gettxbuf(t)
+static inline void *abcsp_uart_gettxbuf(int *length)
+{
+    static char buffer[1024];
+    *length = 1024;
+    return buffer;
+}
 #define ABCSP_UART_GETTXBUF(t)		abcsp_uart_gettxbuf(t)
 
 
@@ -164,7 +171,8 @@ FUNCTION
 
         The call returns ownership of the buffer to the external code.
 */
-#define ABCSP_UART_SENDBYTES(t,n)	abcsp_uart_sendbytes(t, n)
+extern int serial_write();
+#define ABCSP_UART_SENDBYTES(t,n)	serial_write(t,n) //abcsp_uart_sendbytes(t, n)
 
 /****************************************************************************
 NAME

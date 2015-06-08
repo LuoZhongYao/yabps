@@ -2,36 +2,225 @@
 #include <zl/util.h>
 #include <zl/log.h>
 #include <transport.h>
+#include <drv.h>
 #include <hci.h>
-typedef struct hci_impl_t hci_impl_t;
-typedef void (*ch_route_t)(hci_impl_t *impl,void *data);
-typedef void (*event_handler_t)(hci_impl_t *impl,hci_event_t *event);
+#include "hci_layer.h"
+typedef void (*ch_handler_t)(void *data);
+typedef void (*event_handler_t)(hci_event_t *event);
 
-struct hci_impl_t {
-    drv_t hci,*server,*client;
-    event_handler_t event_handlers[HCI_MAX_EVENT_OPCODE];
-    ch_route_t channel_route[CHANNEL_VM];
-};
-
-static void hci_ev_command_complete(hci_impl_t *impl,hci_event_t *ev)
+static void hci_ev_command_complete(hci_event_t *ev)
 {
     hci_ev_command_complete_t *msg = (hci_ev_command_complete_t *)ev;
     LOGD("pkts number %d,op_code %x,status %d",msg->num_hci_command_pkts,
             msg->op_code,msg->status);
+    if(msg->op_code == HCI_NOP) {
+        hci_chip_active();
+    } else switch(msg->op_code) {
+    case HCI_SET_HCTOHOST_FLOW_CONTROL:
+        LOGD("HCI_SET_HCTOHOST_FLOW_CONTROL");
+        break;
+
+    case HCI_HOST_BUFFER_SIZE:
+        LOGD("HCI_HOST_BUFFER_SIZE");
+        break;
+
+    case HCI_HOST_NUM_COMPLETED_PACKETS:
+        LOGD("HCI_HOST_NUM_COMPLETED_PACKETS");
+        break;
+
+    case HCI_RESET:
+        LOGD("HCI_RESET");
+        break;
+
+    case HCI_WRITE_AUTH_ENABLE:
+        LOGD("HCI_WRITE_AUTH_ENABLE");
+        break;
+
+    case HCI_WRITE_ENC_MODE:
+        LOGD("HCI_WRITE_ENC_MODE");
+        break;
+
+    case HCI_WRITE_SIMPLE_PAIRING_MODE:
+        LOGD("HCI_WRITE_SIMPLE_PAIRING_MODE");
+        break;
+
+    case HCI_WRITE_SIMPLE_PAIRING_DEBUG_MODE:
+        LOGD("HCI_WRITE_SIMPLE_PAIRING_DEBUG_MODE");
+        break;
+
+    case HCI_SET_EVENT_MASK:
+        LOGD("HCI_SET_EVENT_MASK");
+        break;
+
+    case HCI_READ_LOCAL_SUPP_FEATURES:
+        LOGD("HCI_READ_LOCAL_SUPP_FEATURES");
+        break;
+
+    case HCI_READ_BUFFER_SIZE:
+        LOGD("HCI_READ_BUFFER_SIZE");
+        break;
+
+    case HCI_LINK_KEY_REQ_REPLY:
+        LOGD("HCI_LINK_KEY_REQ_REPLY");
+        break;
+
+    case HCI_LINK_KEY_REQ_NEG_REPLY:
+        LOGD("HCI_LINK_KEY_REQ_NEG_REPLY");
+        break;
+
+    case HCI_PIN_CODE_REQ_REPLY:
+        LOGD("HCI_PIN_CODE_REQ_REPLY");
+        break;
+
+    case HCI_PIN_CODE_REQ_NEG_REPLY:
+        LOGD("HCI_PIN_CODE_REQ_NEG_REPLY");
+        break;
+
+    case HCI_IO_CAPABILITY_RESPONSE:
+        LOGD("HCI_IO_CAPABILITY_RESPONSE");
+        break;
+
+    case HCI_IO_CAPABILITY_REQUEST_NEG_REPLY:
+        LOGD("HCI_IO_CAPABILITY_REQUEST_NEG_REPLY");
+        break;
+
+    case HCI_USER_CONFIRMATION_REQUEST_REPLY:
+        LOGD("HCI_USER_CONFIRMATION_REQUEST_REPLY");
+        break;
+
+    case HCI_USER_CONFIRMATION_REQUEST_NEG_REPLY:
+        LOGD("HCI_USER_CONFIRMATION_REQUEST_NEG_REPLY");
+        break;
+
+    case HCI_USER_PASSKEY_REQUEST_REPLY:
+        LOGD("HCI_USER_PASSKEY_REQUEST_REPLY");
+        break;
+
+    case HCI_USER_PASSKEY_REQUEST_NEG_REPLY:
+        LOGD("HCI_USER_PASSKEY_REQUEST_NEG_REPLY");
+        break;
+
+    case HCI_REMOTE_OOB_DATA_REQUEST_REPLY:
+        LOGD("HCI_REMOTE_OOB_DATA_REQUEST_REPLY");
+        break;
+
+    case HCI_REMOTE_OOB_DATA_REQUEST_NEG_REPLY:
+        LOGD("HCI_REMOTE_OOB_DATA_REQUEST_NEG_REPLY");
+        break;
+
+    case HCI_SEND_KEYPRESS_NOTIFICATION:
+        LOGD("HCI_SEND_KEYPRESS_NOTIFICATION");
+        break;
+
+    case HCI_READ_LOCAL_OOB_DATA:
+        LOGD("HCI_READ_LOCAL_OOB_DATA");
+        break;
+
+    case HCI_CREATE_CONNECTION_CANCEL:
+        LOGD("HCI_CREATE_CONNECTION_CANCEL");
+        break;
+
+    case HCI_DELETE_STORED_LINK_KEY:
+        LOGD("HCI_DELETE_STORED_LINK_KEY");
+        break;
+
+    }
 }
 
-static void hci_ev_command_status(hci_impl_t *impl,hci_event_t *ev)
+static void hci_ev_command_status(hci_event_t *ev)
 {
     hci_ev_command_status_t *msg = (hci_ev_command_status_t *)ev;
-    hci_read_buffer_size_t *cmd = __new(hci_read_buffer_size_t);
-    cmd->op_code = HCI_READ_BUFFER_SIZE;
-    LOGD("status %d,pkts number %d,op_code %x",msg->status,
-            msg->num_hci_command_pkts,msg->op_code);
-    //drv_send((&(impl->hci)),CHANNEL_HCI,&cmd,sizeof(cmd));
-    drv_send(impl->server,CHANNEL_HCI,cmd,sizeof(*cmd));
+    if(msg->op_code == HCI_NOP) {
+        hci_chip_active();
+    } else if(msg->status != HCI_COMMAND_CURRENTLY_PENDING) switch(msg->op_code) {
+    case HCI_INQUIRY:
+        LOGD("HCI_INQUIRY");
+        break;
+    case HCI_CREATE_CONNECTION:
+        LOGD("HCI_CREATE_CONNECTION");
+        break;
+    case HCI_DISCONNECT:
+        LOGD("HCI_DISCONNECT");
+        break;
+    case HCI_ACCEPT_CONNECTION_REQ:
+        LOGD("HCI_ACCEPT_CONNECTION_REQ");
+        break;
+    case HCI_REJECT_CONNECTION_REQ:
+        LOGD("HCI_REJECT_CONNECTION_REQ");
+        break;
+    case HCI_CHANGE_CONN_PKT_TYPE:
+        LOGD("HCI_CHANGE_CONN_PKT_TYPE");
+        break;
+    case HCI_AUTH_REQ:
+        LOGD("HCI_AUTH_REQ");
+        break;
+    case HCI_SET_CONN_ENCRYPTION:
+        LOGD("HCI_SET_CONN_ENCRYPTION");
+        break;
+    case HCI_CHANGE_CONN_LINK_KEY:
+        LOGD("HCI_CHANGE_CONN_LINK_KEY");
+        break;
+    case HCI_MASTER_LINK_KEY:
+        LOGD("HCI_MASTER_LINK_KEY");
+        break;
+    case HCI_REMOTE_NAME_REQ:
+        LOGD("HCI_REMOTE_NAME_REQ");
+        break;
+    case HCI_READ_REMOTE_SUPP_FEATURES:
+        LOGD("HCI_READ_REMOTE_SUPP_FEATURES");
+        break;
+    case HCI_READ_REMOTE_EXT_FEATURES:
+        LOGD("HCI_READ_REMOTE_EXT_FEATURES");
+        break;
+    case HCI_READ_REMOTE_VER_INFO:
+        LOGD("HCI_READ_REMOTE_VER_INFO");
+        break;
+    case HCI_READ_CLOCK_OFFSET:
+        LOGD("HCI_READ_CLOCK_OFFSET");
+        break;
+    case HCI_HOLD_MODE:
+        LOGD("HCI_HOLD_MODE");
+        break;
+    case HCI_SNIFF_MODE:
+        LOGD("HCI_SNIFF_MODE");
+        break;
+    case HCI_EXIT_SNIFF_MODE:
+        LOGD("HCI_EXIT_SNIFF_MODE");
+        break;
+    case HCI_PARK_MODE:
+        LOGD("HCI_PARK_MODE");
+        break;
+    case HCI_EXIT_PARK_MODE:
+        LOGD("HCI_EXIT_PARK_MODE");
+        break;
+    case HCI_QOS_SETUP:
+        LOGD("HCI_QOS_SETUP");
+        break;
+    case HCI_SWITCH_ROLE:
+        LOGD("HCI_SWITCH_ROLE");
+        break;
+    case HCI_FLOW_SPEC:
+        LOGD("HCI_FLOW_SPEC");
+        break;
+    case HCI_SETUP_SYNCHRONOUS_CONN:
+        LOGD("HCI_SETUP_SYNCHRONOUS_CONN");
+        break;
+    case HCI_ENHANCED_FLUSH:
+        LOGD("HCI_ENHANCED_FLUSH");
+        break;
+    case HCI_REFRESH_ENCRYPTION_KEY:
+        LOGD("HCI_REFRESH_ENCRYPTION_KEY");
+        break;
+    }
 }
 
-static void __hci_event(hci_impl_t *impl,struct hci_event_t *event)
+static const event_handler_t event_handlers[HCI_MAX_EVENT_OPCODE] = {
+    [HCI_EV_COMMAND_COMPLETE] = hci_ev_command_complete,
+    [HCI_EV_COMMAND_STATUS] = hci_ev_command_status,
+};
+
+
+static void __hci_event(struct hci_event_t *event)
 {
 #ifdef  HCI_DEBUG
     switch(event->event_code) {
@@ -217,16 +406,21 @@ static void __hci_event(hci_impl_t *impl,struct hci_event_t *event)
         break;
     }
 #endif
-    if(event->event_code > 0 && event->event_code < HCI_MAX_EVENT_OPCODE) {
-        impl->event_handlers[event->event_code](impl,event);
+    if(event->event_code > 0 
+            && event->event_code < HCI_MAX_EVENT_OPCODE
+            && event_handlers[event->event_code]) {
+        event_handlers[event->event_code](event);
     } else {
         LOGE("Invalid event code %d",event->event_code);
     }
 }
 
-static  int __receiv(drv_t *hci,transport_channel_t channel,void *msg,size_t nlen __unused)
+static ch_handler_t channels [] = {
+    [CHANNEL_HCI] = (void *)__hci_event,
+};
+
+int hci_receiv(transport_t channel,MessageStructure *src)
 {
-    hci_impl_t *impl = container_of(hci,hci_impl_t,hci);
 #ifdef HCI_DEBUG
     switch(channel){
     case CHANNEL_ACL:
@@ -251,102 +445,20 @@ static  int __receiv(drv_t *hci,transport_channel_t channel,void *msg,size_t nle
         break;
     }
 #endif
-    if(channel >= CHANNEL_UNRELIABLE && channel <= CHANNEL_VM)
-        impl->channel_route[channel](impl,msg);
+    if(channel >= CHANNEL_UNRELIABLE &&
+            channel <= CHANNEL_VM &&
+            channels[channel])
+        channels[channel](src->buf);
     else
         LOGE("The channel(%d) can not be routed",channel);
     return 0;
 }
 
-static int __send(drv_t *hci,transport_channel_t channel,const void *msg,size_t mlen)
+int hci_send(transport_t channel,const void *buffer,size_t mlen)
 {
-    hci_impl_t *impl = container_of(hci,hci_impl_t,hci);;
-    drv_send(impl->client,channel,msg,mlen);
-    return 0;
-}
-
-static void __hci_channel_unroute(hci_impl_t *impl __unused,void *msg __unused)
-{
-    LOGE("No one is to deal with this channel");
-}
-
-static void __hci_event_unhandler(hci_impl_t *impl __unused,hci_event_t *event __unused)
-{
-    LOGE("No one is to deal with this event,event code %d",event->event_code);
-}
-
-static int __register_event_handler(drv_t *hci,u8 event,event_handler_t handle)
-{
-    hci_impl_t *impl = container_of(hci,hci_impl_t,hci);
-    if(event >=0 && event < HCI_MAX_EVENT_OPCODE) {
-        if(impl->event_handlers[event] != __hci_event_unhandler)
-            return -EEXIST;
-        impl->event_handlers[event] = handle;
-        return 0;
-    }
-    return -EINVAL;
-}
-
-static int __register_route(drv_t *hci,transport_channel_t ch ,ch_route_t handle)
-{
-    hci_impl_t *impl = container_of(hci,hci_impl_t,hci);
-    if(ch >= CHANNEL_UNRELIABLE && ch <= CHANNEL_VM) {
-        if(impl->channel_route[ch] != __hci_channel_unroute)
-            return -EEXIST;
-        impl->channel_route[ch] = handle;
-        return 0;
-    }
-    return -EINVAL;
-}
-
-static int __external(drv_t *hci,int type,int idx,void *handle)
-{
-    switch(type) {
-    case HCI_CHANNEL:
-        return __register_route(hci,idx,handle);
-        break;
-    case HCI_EVENT:
-        return __register_event_handler(hci,idx,handle);
-        break;
-    }
-    return -ENOSYS;
-}
-
-static int __server(drv_t *__drv,drv_t *__server)
-{
-    hci_impl_t *hci = container_of(__drv, hci_impl_t,hci);
-    hci->server = __server;
-    return 0;
-}
-
-static int __client(drv_t *__drv,drv_t *__client)
-{
-    hci_impl_t *hci = container_of(__drv, hci_impl_t,hci);
-    hci->server = __client;
-    return 0;
-}
-
-drv_t *new_hci(void)
-{
-    hci_impl_t *impl = __new(hci_impl_t);
-    assert(impl != NULL);
-    impl->hci.send   = __send;
-    impl->hci.receiv = __receiv;
-    impl->hci.client = __client;
-    impl->hci.server = __server;
-    impl->hci.external = __external;
-    for(int i = 0;i < HCI_MAX_EVENT_OPCODE;i++)
-        impl->event_handlers[i] = __hci_event_unhandler;
-
-    for(int i = CHANNEL_UNRELIABLE;i <= CHANNEL_VM;i++)
-        impl->channel_route[i] = __hci_channel_unroute;
-    impl->channel_route[CHANNEL_HCI] = (ch_route_t)__hci_event;
-    impl->event_handlers[HCI_EV_COMMAND_COMPLETE] = hci_ev_command_complete;
-    impl->event_handlers[HCI_EV_COMMAND_STATUS] = hci_ev_command_status;
-    return &(impl->hci);
-}
-
-void delete_hci(drv_t *hci)
-{
-    delete(hci);
+    MessageStructure *msg = __new(MessageStructure);
+    LOGD("abcsp send channel %d data.",channel);
+    msg->buf = (void*)buffer;
+    msg->buflen = mlen;
+    return abcsp_sendmsg((void*)msg,channel,1);
 }

@@ -3,7 +3,7 @@
 
 /****************************************************************************
 
-   				© Cambridge Silicon Radio Ltd, 2004
+   				? Cambridge Silicon Radio Ltd, 2004
  	 			
 				All rights reserved
 
@@ -17,6 +17,7 @@ REVISION:		$Revision: #1 $
 ****************************************************************************/
 
 #include <string.h>
+#include <hci.h>
 #include "abcsp.h" 
 #include "abcsp_events.h" 
 #include "abcsp_panics.h" 
@@ -41,7 +42,6 @@ ABCSP_RXMSG *abcsp_rxmsg_create(unsigned len);
 char *abcsp_rxmsg_getbuf(ABCSP_RXMSG *m, unsigned *n);
 void abcsp_rxmsg_write(ABCSP_RXMSG *m, char *buf, unsigned n);
 void abcsp_rxmsg_complete(ABCSP_RXMSG *m);
-void temp_abcsp_rxmsg_destroy(ABCSP_RXMSG *m);
 void abcsp_cancel_bcsp_timer(void);
 void abcsp_cancel_tshy_timer(void);
 void abcsp_cancel_tconf_timer(void);
@@ -56,6 +56,7 @@ void abcsp_txmsg_done(ABCSP_TXMSG *msg);
 void abcsp_uart_sendbytes(char *buf, unsigned n);
 void abcsp_txmsg_done(ABCSP_TXMSG *msg);
 void abcsp_pumptxmsgsOut(void);			/*Called by bg_int to do pump*/
+void AbcspRxMmsgDestroy(ABCSP_RXMSG *m);
 
 #ifdef ROM_BUILD_ENABLE
 void abcsp_restart(void);

@@ -166,22 +166,22 @@ bool xabcsp_rxbcsp_putbyte(uint8 c)
                         }
 #ifdef ABCSP_RXMSG_MAX_PAYLOAD_LEN
                 if(hdr_len() > ABCSP_RXMSG_MAX_PAYLOAD_LEN) {
-                        ABCSP_EVENT(ABCSP_EVT_OVERSIZE_DISCARD);
-                        state = rxstate_consume;
-                        break;
-                        }
+                    ABCSP_EVENT(ABCSP_EVT_OVERSIZE_DISCARD);
+                    state = rxstate_consume;
+                    break;
+                }
 #endif
                 if(hdr_rel() && hdr_seq() != abcsp_txrx.rxseq_txack) {
-                        ABCSP_EVENT(ABCSP_EVT_MISSEQ_DISCARD);
-                        state = rxstate_misseq;
+                    ABCSP_EVENT(ABCSP_EVT_MISSEQ_DISCARD);
+                    state = rxstate_misseq;
 
-			/* BCSP must acknowledge all reliable packets to
-			avoid deadlock. */
+                    /* BCSP must acknowledge all reliable packets to
+                       avoid deadlock. */
 
-			abcsp_txrx.txack_req = 1;
-			ABCSP_REQ_PUMPTXMSGS();
-                        break;
-                        }
+                    abcsp_txrx.txack_req = 1;
+                    ABCSP_REQ_PUMPTXMSGS();
+                    break;
+                }
 
                 abcsp_rxmsgdemux_newmsg(hdr_chan(), hdr_rel(), hdr_len());
 

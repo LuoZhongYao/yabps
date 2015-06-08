@@ -1,6 +1,6 @@
 #ifndef __TRABSPORT_H__
 #define __TRABSPORT_H__
-#include <object.h>
+#include <zl/types.h>
 __BEGIN_DECLS
 
 typedef enum {
@@ -18,7 +18,7 @@ typedef enum {
     CHANNEL_SDP,
     CHANNEL_DFU,
     CHANNEL_VM,
-}transport_channel_t;
+}transport_t;
 
 
 __END_DECLS

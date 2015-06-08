@@ -278,7 +278,4 @@ FUNCTION
 	transmitted BCSP messages.  */
 
 extern void abcsp_bcsp_timed_event(void);
-#include <drv.h>
-drv_t *new_abcsp(void);
-void delete_abcsp(drv_t *drv);
 #endif  /* __ABCSP_H__ */
