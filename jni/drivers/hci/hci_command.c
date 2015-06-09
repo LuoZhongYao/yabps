@@ -3,8 +3,30 @@
 #include <zl/util.h>
 #include <assert.h>
 
-#define __DECAL(t,code)  t *cmd = __new(t);assert(cmd);cmd->op_code = code
+#define __DECAL(t,code)  t *cmd = __new(t);assert(cmd);cmd->op_code = code;cmd->param_length = (sizeof(t) - sizeof(hci_command_t))
 #define __SEND(t)   hci_send(CHANNEL_HCI,cmd,sizeof(*cmd))
+
+void hci_inquiry(u32 lap,u8 inquiry_length,u8 num_responses)
+{
+    __DECAL(hci_inquiry_t,HCI_INQUIRY);
+    cmd->lap = lap;
+    cmd->inquiry_length = inquiry_length;
+    cmd->num_responses = num_responses;
+    __SEND();
+}
+
+void hci_write_scan_enable(u8 enable)
+{
+    __DECAL(hci_write_scan_enable_t,HCI_WRITE_SCAN_ENABLE);
+    cmd->scan_enable = enable;
+    __SEND();
+}
+
+void hci_read_local_version(void)
+{
+    __DECAL(hci_read_local_version_t,HCI_READ_LOCAL_VER_INFO);
+    __SEND();
+}
 
 void hci_read_buffer_size(void)
 {

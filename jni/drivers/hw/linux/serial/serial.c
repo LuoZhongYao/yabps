@@ -25,6 +25,7 @@ struct serial_t{
     bool running;
 } __drv;
 
+#ifdef __LOG_TX_RX__
 static int printx(const char *promt,const char *x,size_t n) {
     static char buffer[1024];
     int l = sprintf(buffer,"%s(%02x) : ",promt,n);
@@ -33,6 +34,7 @@ static int printx(const char *promt,const char *x,size_t n) {
     LOGD("%s\n",buffer);
     return 0;
 }
+#endif
 
 
 int serial_configure(speed_t rate) {
@@ -75,7 +77,9 @@ int serial_configure(speed_t rate) {
 }
 
 int serial_write(const void *__buffer,size_t __n) {
+#ifdef __LOG_TX_RX__
     printx("TX",__buffer,__n);
+#endif
     if(__drv.fd > 0)
         return write(__drv.fd,__buffer,__n);
     errno = -ENOENT;
@@ -104,7 +108,9 @@ static void* drv_reader(void *__prv) {
         len = read(__drv.fd,buffer,sizeof(buffer));
         if(len > 0) {
             int l = 0;
+#ifdef  __LOG_TX_RX__
             printx("RX",buffer,len);
+#endif
             while(l < len) {
                 int il = abcsp_uart_deliverbytes(buffer + l,len - l);
                 if(il > 0)

@@ -5,13 +5,14 @@
 #include <drv.h>
 #include <hci.h>
 #include "hci_layer.h"
+#include "hci_command.h"
 typedef void (*ch_handler_t)(void *data);
 typedef void (*event_handler_t)(hci_event_t *event);
 
 static void hci_ev_command_complete(hci_event_t *ev)
 {
     hci_ev_command_complete_t *msg = (hci_ev_command_complete_t *)ev;
-    LOGD("pkts number %d,op_code %x,status %d",msg->num_hci_command_pkts,
+    LOGD("command complete pkts number %d,op_code %x,status %d",msg->num_hci_command_pkts,
             msg->op_code,msg->status);
     if(msg->op_code == HCI_NOP) {
         hci_chip_active();
@@ -58,6 +59,7 @@ static void hci_ev_command_complete(hci_event_t *ev)
 
     case HCI_READ_BUFFER_SIZE:
         LOGD("HCI_READ_BUFFER_SIZE");
+        hci_write_scan_enable(HCI_SCAN_ENABLE_INQ_AND_PAGE);
         break;
 
     case HCI_LINK_KEY_REQ_REPLY:
@@ -123,13 +125,17 @@ static void hci_ev_command_complete(hci_event_t *ev)
     case HCI_DELETE_STORED_LINK_KEY:
         LOGD("HCI_DELETE_STORED_LINK_KEY");
         break;
-
+    default:
+        hci_inquiry(0x9e8b33,HCI_INQUIRY_LENGTH_MAX,0);
+        break;
     }
 }
 
 static void hci_ev_command_status(hci_event_t *ev)
 {
     hci_ev_command_status_t *msg = (hci_ev_command_status_t *)ev;
+    LOGD("command status pkts number %d,op_code %x,status %d",msg->num_hci_command_pkts,
+            msg->op_code,msg->status);
     if(msg->op_code == HCI_NOP) {
         hci_chip_active();
     } else if(msg->status != HCI_COMMAND_CURRENTLY_PENDING) switch(msg->op_code) {
@@ -210,6 +216,8 @@ static void hci_ev_command_status(hci_event_t *ev)
         break;
     case HCI_REFRESH_ENCRYPTION_KEY:
         LOGD("HCI_REFRESH_ENCRYPTION_KEY");
+        break;
+    default:
         break;
     }
 }
@@ -421,7 +429,7 @@ static ch_handler_t channels [] = {
 
 int hci_receiv(transport_t channel,MessageStructure *src)
 {
-#ifdef HCI_DEBUG
+#ifdef __LOG_HCI_CHANNEL__
     switch(channel){
     case CHANNEL_ACL:
         LOGD("ACL");
@@ -457,7 +465,6 @@ int hci_receiv(transport_t channel,MessageStructure *src)
 int hci_send(transport_t channel,const void *buffer,size_t mlen)
 {
     MessageStructure *msg = __new(MessageStructure);
-    LOGD("abcsp send channel %d data.",channel);
     msg->buf = (void*)buffer;
     msg->buflen = mlen;
     return abcsp_sendmsg((void*)msg,channel,1);
