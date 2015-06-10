@@ -6,4 +6,4 @@ APP_C_INCLUDE	:= $(TOP)/include
 
 APP_CFLAGS 	:= \
 	-I$(APP_C_INCLUDE) \
-	-DHCI_DEBUG\
+	-D__LOG_HCI_EVENT__\

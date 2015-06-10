@@ -1,7 +1,6 @@
 #include <config.h>
 #include "hci_layer.h"
-#include "hci_command.h"
-#include "hci.h"
+#include <hci.h>
 
 void hci_chip_active(void)
 {

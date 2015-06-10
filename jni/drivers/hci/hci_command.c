@@ -1,9 +1,8 @@
-#include "hci.h"
-#include "hci_command.h"
+#include <hci.h>
 #include <zl/util.h>
 #include <assert.h>
 
-#define __DECAL(t,code)  t *cmd = __new(t);assert(cmd);cmd->op_code = code;cmd->param_length = (sizeof(t) - sizeof(hci_command_t))
+#define __DECAL(t,code)  t *cmd = __new(t);assert(cmd);cmd->op_code = code;cmd->length = (sizeof(t) - sizeof(hci_command_t))
 #define __SEND(t)   hci_send(CHANNEL_HCI,cmd,sizeof(*cmd))
 
 void hci_inquiry(u32 lap,u8 inquiry_length,u8 num_responses)
@@ -11,7 +10,7 @@ void hci_inquiry(u32 lap,u8 inquiry_length,u8 num_responses)
     __DECAL(hci_inquiry_t,HCI_INQUIRY);
     cmd->lap = lap;
     cmd->inquiry_length = inquiry_length;
-    cmd->num_responses = num_responses;
+    cmd->responses = num_responses;
     __SEND();
 }
 
