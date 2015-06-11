@@ -8,6 +8,10 @@
 #include <hci/hci_error.h>
 
 __BEGIN_DECLS
+
+#define HCI_MASTER          (0)
+#define HCI_SLAVE           (1)
+
 enum {
     HCI_CHANNEL,
     HCI_EVENT,

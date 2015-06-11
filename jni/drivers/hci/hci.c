@@ -8,7 +8,7 @@
 typedef void (*ch_handler_t)(void *data);
 extern void hci_event_handler();
 
-static ch_handler_t channels [] = {
+static const ch_handler_t channels [] = {
     [CHANNEL_HCI] = hci_event_handler,
 };
 
@@ -39,11 +39,12 @@ int hci_receiv(transport_t channel,MessageStructure *src)
     }
 #endif
     if(channel >= CHANNEL_UNRELIABLE &&
-            channel <= CHANNEL_VM &&
-            channels[channel])
+            channel < ARRAY_SIZE(channels) &&
+            channels[channel]) {
         channels[channel](src->buf);
-    else
+    } else {
         LOGE("The channel(%d) can not be routed",channel);
+    }
     return 0;
 }
 

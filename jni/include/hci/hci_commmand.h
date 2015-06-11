@@ -747,6 +747,12 @@ typedef struct {
 
 typedef struct {
     __COMMAND;
+    bd_addr_t bd_addr;
+    u8 role;
+} __packed hci_accept_connection_req_t;
+
+typedef struct {
+    __COMMAND;
     u16 max_period_length;
     u16 min_period_length;
     u32 lap:24;
@@ -790,12 +796,6 @@ typedef struct {
 typedef struct {
     __COMMAND;
     bd_addr_t bd_addr;
-    u8 role;
-} __packed hci_accept_connection_req_t;
-
-typedef struct {
-    __COMMAND;
-    bd_addr_t bd_addr;
     u8  reason;
 } __packed hci_reject_connection_req_t;
 
@@ -814,8 +814,8 @@ typedef struct {
 	__COMMAND;
 	bd_addr_t bd_addr;
     u8 pin_length;
-    u16 ping[8];
-} __packed hci_pin_code_req_replay_t;
+    u8 pin[HCI_MAX_PIN_LENGTH];
+} __packed hci_pin_code_req_reply_t;
 
 typedef struct {
 	__COMMAND;
@@ -866,6 +866,8 @@ typedef struct {
 }__packed hci_read_buffer_size_t;
 
 void hci_inquiry(u32 lap,u8 inquiry_length,u8 num_responses);
+void hci_accept_connection(bd_addr_t *bd_addr,u8 role);
+void hci_pin_code_req_reply(bd_addr_t *bd_addr,u8 pin_length,u8 *pin);
 void hci_write_scan_enable(u8 enable);
 void hci_read_local_version(void);
 void hci_read_buffer_size(void);

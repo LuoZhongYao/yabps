@@ -14,6 +14,23 @@ void hci_inquiry(u32 lap,u8 inquiry_length,u8 num_responses)
     __SEND();
 }
 
+void hci_accept_connection(bd_addr_t *bd_addr,u8 role)
+{
+    __DECAL(hci_accept_connection_req_t,HCI_ACCEPT_CONNECTION_REQ);
+    cmd->bd_addr = *bd_addr;
+    cmd->role = role;
+    __SEND();
+}
+
+void hci_pin_code_req_reply(bd_addr_t *bd_addr,u8 pin_length,u8 *pin)
+{
+    __DECAL(hci_pin_code_req_reply_t,HCI_PIN_CODE_REQ_REPLY);
+    cmd->pin_length = pin_length > HCI_MAX_PIN_LENGTH ? HCI_MAX_PIN_LENGTH : pin_length;
+    cmd->bd_addr = *bd_addr;
+    memcpy(cmd->pin,pin,cmd->pin_length);
+    __SEND();
+}
+
 void hci_write_scan_enable(u8 enable)
 {
     __DECAL(hci_write_scan_enable_t,HCI_WRITE_SCAN_ENABLE);

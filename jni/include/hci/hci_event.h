@@ -141,9 +141,9 @@ typedef struct {
     bd_addr_t bd_addr;
     u8 page_scan_rep_mode;
     u8 page_scan_period_mode;
+    u32 page_scan_mode:8;
     u32 dev_class:24;
-    u32 clock_offset_h:8;
-    u8 clock_offset_l;
+    u16 clock_offset;
 
 }__packed hci_inq_result_t;
 
@@ -153,6 +153,33 @@ typedef struct {
     hci_inq_result_t result[0];
 }__packed hci_ev_inquiry_result_t;
 
+typedef struct {
+    __EVENT;
+    bd_addr_t bd_addr;
+    u32 dev_class:24;
+    u32 link_type:8;
+} __packed hci_ev_conn_request_t;
+
+typedef struct {
+    __EVENT;
+    u8 status;
+    u16 handle;
+    bd_addr_t bd_addr;
+    u8 link_type;
+    u8 enc_enable;
+}__packed hci_ev_conn_complete_t;
+
+typedef struct {
+    __EVENT;
+    bd_addr_t bd_addr;
+}__packed hci_ev_pin_code_req_t;
+
+typedef struct {
+    __EVENT;
+    u8 status;
+    u16 handle;
+    u8 reason;
+}__packed hci_ev_disconnect_complete_t;
 
 __END_DECLS
 #endif

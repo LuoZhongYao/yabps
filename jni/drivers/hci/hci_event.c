@@ -3,6 +3,10 @@
 #include "hci_layer.h"
 
 typedef void (*event_handler_t)();
+
+#define __STR_BDADDR    "%04x:%02x:%06x"
+#define __BD_ADDR(ev)   ev->bd_addr.nap,ev->bd_addr.uap,ev->bd_addr.lap
+
 #ifdef __LOG_HCI_EVENT__
 #define __EV_STR(x)     [x] = #x
 #define __CMD_STR(ocf)  #ocf    
@@ -283,18 +287,6 @@ static const char *event_strings[] = {
     __EV_STR(HCI_EV_REM_HOST_SUPPORTED_FEATURES),
 };
 #endif
-static void hci_ev_inquiry_result(hci_ev_inquiry_result_t *ev)
-{
-    u8 i = 0;
-    LOGD("number : %d,length %d",ev->num_responses,ev->param_length);
-    for(i = 0;i < ev->num_responses;i++){
-        hci_inq_result_t *result = ev->result + i;
-        LOGD("%04x:%2x:%06x mode %x,class : %x,clock_offset %x",result->bd_addr.nap,
-                result->bd_addr.uap,result->bd_addr.lap,result->page_scan_rep_mode,
-                result->dev_class,result->clock_offset_h << 8 | result->clock_offset_l);
-    }
-}
-
 static void hci_ev_command_complete(hci_event_t *ev)
 {
     hci_ev_command_complete_t *msg = (hci_ev_command_complete_t *)ev;
@@ -415,10 +407,54 @@ static void hci_ev_command_status(hci_event_t *ev)
     } 
 }
 
+static void hci_ev_inquiry_result(hci_ev_inquiry_result_t *ev)
+{
+    u8 i = 0;
+    LOGD("number : %d,length %d",ev->num_responses,ev->param_length);
+    for(i = 0;i < ev->num_responses;i++){
+        hci_inq_result_t *result = ev->result + i;
+        LOGD("%04x:%2x:%06x mode %x,class : %x,clock_offset %x",result->bd_addr.nap,
+                result->bd_addr.uap,result->bd_addr.lap,result->page_scan_rep_mode,
+                result->dev_class,result->clock_offset);
+    }
+}
+
+static void hci_ev_conn_complete(hci_ev_conn_complete_t *ev)
+{
+    LOGD("%04x:%02x:%06x status : %x,handle %x link type %x encryption enable %x",
+            ev->bd_addr.nap,ev->bd_addr.nap,ev->bd_addr.lap,
+            ev->status,ev->handle,ev->link_type,ev->enc_enable);
+}
+
+static void hci_ev_conn_request(hci_ev_conn_request_t *ev)
+{
+    //bd_addr_t bd_addr = {0xa11cf3,0x18,0x000d};
+    LOGD("%04x:%02x:%06x device class : %x link type %x",
+            ev->bd_addr.nap,ev->bd_addr.uap,ev->bd_addr.lap,
+            ev->dev_class,ev->link_type);
+    hci_accept_connection(&(ev->bd_addr),HCI_MASTER);
+}
+
+static void hci_ev_pin_code_req(hci_ev_pin_code_req_t *ev)
+{
+    LOGD("%04x:%02x:%06x",ev->bd_addr.nap,ev->bd_addr.uap,
+            ev->bd_addr.lap);
+    hci_pin_code_req_reply(&(ev->bd_addr),4,(u8*)"0000");
+}
+
+static void hci_ev_disconnect_complete(hci_ev_disconnect_complete_t *ev)
+{
+    LOGD("status %x,handle %x,reason %x",ev->status,ev->handle,ev->reason);
+}
+
 static const event_handler_t event_handlers[HCI_MAX_EVENT_OPCODE] = {
-    [HCI_EV_INQUIRY_RESULT] = hci_ev_inquiry_result,
-    [HCI_EV_COMMAND_COMPLETE] = hci_ev_command_complete,
-    [HCI_EV_COMMAND_STATUS] = hci_ev_command_status,
+    [HCI_EV_INQUIRY_RESULT]     = hci_ev_inquiry_result,
+    [HCI_EV_CONN_COMPLETE]      = hci_ev_conn_complete,
+    [HCI_EV_CONN_REQUEST]       = hci_ev_conn_request,
+    [HCI_EV_DISCONNECT_COMPLETE]= hci_ev_disconnect_complete,
+    [HCI_EV_PIN_CODE_REQ]       = hci_ev_pin_code_req,
+    [HCI_EV_COMMAND_COMPLETE]   = hci_ev_command_complete,
+    [HCI_EV_COMMAND_STATUS]     = hci_ev_command_status,
 };
 
 void hci_event_handler(hci_event_t *event)
