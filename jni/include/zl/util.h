@@ -3,8 +3,12 @@
 #include <sys/types.h>
 #include <stddef.h>
 #include <stdlib.h>
-__BEGIN_DECLS
 
+#ifndef __cplusplus
+#define delete(x) free(x)
+#endif
+
+__BEGIN_DECLS
 
 #define BUILD_BUG_ON_ZERO(e) (sizeof(struct { int:-!!(e); }))
 # define __same_type(a, b) __builtin_types_compatible_p(typeof(a), typeof(b))
@@ -15,11 +19,8 @@ __BEGIN_DECLS
         const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
         (type *)( (char *)__mptr - offsetof(type,member) );})
 
-#define __new(t)  (t *)calloc(1,sizeof(t))
+#define __new(t)        (t *)calloc(1,sizeof(t))
+#define __test_delete(x) do{if((x)) {delete((x));}(x) = NULL;}while(0)
+
 __END_DECLS
-
-#ifndef __cplusplus
-#define delete(x) free(x)
-#endif
-
 #endif

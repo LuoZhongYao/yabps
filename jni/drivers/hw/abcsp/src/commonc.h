@@ -19,6 +19,8 @@ MODIFICATION HISTORY
 
 #ifndef __COMMONC_H__
 #define __COMMONC_H__
+
+#include <stdbool.h>
  
 #ifdef RCS_STRINGS
 static const char commonc_h_id[]
@@ -29,8 +31,10 @@ static const char commonc_h_id[]
 #undef  NULL
 #define NULL            (0)
 
+#if 0
 #undef  bool
 #define bool            unsigned
+#endif
 
 #undef  fast
 #define fast            register

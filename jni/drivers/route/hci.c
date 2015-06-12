@@ -7,9 +7,12 @@
 
 typedef void (*ch_handler_t)(void *data);
 extern void hci_event_handler();
+extern void l2cap_handler();
+extern void acl_handler();
 
 static const ch_handler_t channels [] = {
     [CHANNEL_HCI] = hci_event_handler,
+    [CHANNEL_ACL] = acl_handler,
 };
 
 int hci_receiv(transport_t channel,MessageStructure *src)

@@ -1,4 +1,5 @@
 #include <hci.h>
+#include <acl.h>
 #include <zl/log.h>
 #include "hci_layer.h"
 
@@ -10,6 +11,8 @@ typedef void (*event_handler_t)();
 #ifdef __LOG_HCI_EVENT__
 #define __EV_STR(x)     [x] = #x
 #define __CMD_STR(ocf)  #ocf    
+
+blk_t hci_blks[MAX_ACL_CONNECTIONS] = {0};
 /****************************************************************
  * OCF opcode defines - Link Control Commands
  ***************************************************************/
@@ -292,14 +295,14 @@ static void hci_ev_command_complete(hci_event_t *ev)
     hci_ev_command_complete_t *msg = (hci_ev_command_complete_t *)ev;
     if(msg->op_code == HCI_NOP) {
 #ifdef __LOG_HCI_EVENT__
-        LOGD("NOP Command Complete,chip active");
+        LOGD("[C] NOP Command Complete,chip active");
 #endif
         hci_chip_active();
     } else {
 #ifdef __LOG_HCI_EVENT__
-        LOGD("%s Command Complete,status %x,pkts number %d",
+        LOGD("[C] %s Command %s,pkts number %d",
                 command_strings[msg->op_code >> 10][msg->op_code & HCI_OPCODE_MASK],
-                msg->status,msg->num_hci_command_pkts);
+                hci_error_string(msg->status),msg->num_hci_command_pkts);
 #endif
     } 
     switch(msg->op_code) {
@@ -395,14 +398,14 @@ static void hci_ev_command_status(hci_event_t *ev)
     hci_ev_command_status_t *msg = (hci_ev_command_status_t *)ev;
     if(msg->op_code == HCI_NOP) {
 #ifdef __LOG_HCI_EVENT__
-        LOGD("NOP Command Status,Active Chip");
+        LOGD("[S] NOP Command Status,Active Chip");
 #endif
         hci_chip_active();
     } else {
 #ifdef __LOG_HCI_EVENT__
-        LOGD("%s Command Staus,status %x,pkts number %d",
+        LOGD("[S] %s Command %s,pkts number %d",
                 command_strings[msg->op_code >> 10][msg->op_code & HCI_OPCODE_MASK],
-                msg->status,msg->num_hci_command_pkts);
+                hci_error_string(msg->status),msg->num_hci_command_pkts);
 #endif
     } 
 }
@@ -421,9 +424,21 @@ static void hci_ev_inquiry_result(hci_ev_inquiry_result_t *ev)
 
 static void hci_ev_conn_complete(hci_ev_conn_complete_t *ev)
 {
-    LOGD("%04x:%02x:%06x status : %x,handle %x link type %x encryption enable %x",
+    blk_t *blk;
+    LOGD("%04x:%02x:%06x Connect Complete %s,handle %x link type %x"
+            "encryption enable %x",
             ev->bd_addr.nap,ev->bd_addr.nap,ev->bd_addr.lap,
-            ev->status,ev->handle,ev->link_type,ev->enc_enable);
+            hci_error_string(ev->status),ev->handle,ev->link_type,ev->enc_enable);
+    blk = alloc_blk(hci_blks,MAX_ACL_CONNECTIONS);
+    assert(blk);
+    blk->handle = ev->handle;
+}
+
+static void hci_ev_disconnect_complete(hci_ev_disconnect_complete_t *ev)
+{
+    LOGD("Disconnect Complete %s,handle %x,reason %x",
+            hci_error_string(ev->status),ev->handle,ev->reason);
+    free_blk(get_blk(ev->handle,hci_blks,MAX_ACL_CONNECTIONS));
 }
 
 static void hci_ev_conn_request(hci_ev_conn_request_t *ev)
@@ -442,11 +457,6 @@ static void hci_ev_pin_code_req(hci_ev_pin_code_req_t *ev)
     hci_pin_code_req_reply(&(ev->bd_addr),4,(u8*)"0000");
 }
 
-static void hci_ev_disconnect_complete(hci_ev_disconnect_complete_t *ev)
-{
-    LOGD("status %x,handle %x,reason %x",ev->status,ev->handle,ev->reason);
-}
-
 static const event_handler_t event_handlers[HCI_MAX_EVENT_OPCODE] = {
     [HCI_EV_INQUIRY_RESULT]     = hci_ev_inquiry_result,
     [HCI_EV_CONN_COMPLETE]      = hci_ev_conn_complete,
@@ -463,14 +473,14 @@ void hci_event_handler(hci_event_t *event)
             && event->event_code < HCI_MAX_EVENT_OPCODE
       ){
 #ifdef __LOG_HCI_EVENT__
-        LOGD("HCI Event %s",event_strings[event->event_code]);
+        LOGD("[E] %s",event_strings[event->event_code]);
 #endif
         if(event_handlers[event->event_code]) {
             event_handlers[event->event_code](event);
         } else {
-            LOGE("Unhandle Event %d",event->event_code);
+            LOGE("[E] Unhandle Event %d",event->event_code);
         }
     } else {
-        LOGE("Invalid event code %d",event->event_code);
+        LOGE("[E] Invalid event code %d",event->event_code);
     }
 }

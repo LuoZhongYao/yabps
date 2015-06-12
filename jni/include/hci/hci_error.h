@@ -5,6 +5,8 @@
 #ifndef __HCI_ERROR_H__
 #define __HCI_ERROR_H__
 
+#include <zl/types.h>
+
 /******************************************************************************
  *       HCI Successful return value 
  ******************************************************************************/
@@ -71,8 +73,6 @@
 #define HCI_ERROR_SP_NOT_SUPPORTED_BY_HOST  (0x37)
 #define HCI_ERROR_HOST_BUSY_PAIRING         (0x38)
 
-
-
-
+const char *hci_error_string(u8 err);
 #endif
 
