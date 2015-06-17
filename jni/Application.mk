@@ -7,4 +7,5 @@ APP_C_INCLUDE	:= $(TOP)/include
 APP_CFLAGS 	:= \
 	-I$(APP_C_INCLUDE) \
 	-D__LOG_HCI_EVENT__\
-	-D__LOG_HCI_CHANNEL__\
+	-D__LOG_ACL__\
+	#-D__LOG_HCI_CHANNEL__\

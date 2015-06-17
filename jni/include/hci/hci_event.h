@@ -181,6 +181,11 @@ typedef struct {
     u8 reason;
 }__packed hci_ev_disconnect_complete_t;
 
+typedef struct {
+    __EVENT;
+    u8 code;
+}__packed hci_ev_hw_error_t;
+
 __END_DECLS
 #endif
 

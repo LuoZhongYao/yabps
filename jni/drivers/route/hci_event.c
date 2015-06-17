@@ -3,6 +3,12 @@
 #include <zl/log.h>
 #include "hci_layer.h"
 
+#ifdef __LOG_HCI_EVENT__
+#define EV_LOGD(fmt,...)    LOGD("[EVE] "fmt,##__VA_ARGS__)
+#else
+#define EV_LOGD(...)
+#endif
+
 typedef void (*event_handler_t)();
 
 #define __STR_BDADDR    "%04x:%02x:%06x"
@@ -294,16 +300,12 @@ static void hci_ev_command_complete(hci_event_t *ev)
 {
     hci_ev_command_complete_t *msg = (hci_ev_command_complete_t *)ev;
     if(msg->op_code == HCI_NOP) {
-#ifdef __LOG_HCI_EVENT__
-        LOGD("[C] NOP Command Complete,chip active");
-#endif
+        EV_LOGD("NOP Command Complete,chip active");
         hci_chip_active();
     } else {
-#ifdef __LOG_HCI_EVENT__
-        LOGD("[C] %s Command %s,pkts number %d",
+        EV_LOGD("%s Command %s,pkts number %d",
                 command_strings[msg->op_code >> 10][msg->op_code & HCI_OPCODE_MASK],
                 hci_error_string(msg->status),msg->num_hci_command_pkts);
-#endif
     } 
     switch(msg->op_code) {
     case HCI_SET_HCTOHOST_FLOW_CONTROL:
@@ -388,7 +390,7 @@ static void hci_ev_command_complete(hci_event_t *ev)
     case HCI_DELETE_STORED_LINK_KEY:
         break;
     default:
-        hci_inquiry(0x9e8b33,HCI_INQUIRY_LENGTH_MAX,0);
+        //hci_inquiry(0x9e8b33,HCI_INQUIRY_LENGTH_MAX,0);
         break;
     }
 }
@@ -397,26 +399,22 @@ static void hci_ev_command_status(hci_event_t *ev)
 {
     hci_ev_command_status_t *msg = (hci_ev_command_status_t *)ev;
     if(msg->op_code == HCI_NOP) {
-#ifdef __LOG_HCI_EVENT__
-        LOGD("[S] NOP Command Status,Active Chip");
-#endif
+        EV_LOGD("NOP Command Status,Active Chip");
         hci_chip_active();
     } else {
-#ifdef __LOG_HCI_EVENT__
-        LOGD("[S] %s Command %s,pkts number %d",
+        EV_LOGD("%s Command %s,pkts number %d",
                 command_strings[msg->op_code >> 10][msg->op_code & HCI_OPCODE_MASK],
                 hci_error_string(msg->status),msg->num_hci_command_pkts);
-#endif
     } 
 }
 
 static void hci_ev_inquiry_result(hci_ev_inquiry_result_t *ev)
 {
     u8 i = 0;
-    LOGD("number : %d,length %d",ev->num_responses,ev->param_length);
+    EV_LOGD("number : %d,length %d",ev->num_responses,ev->param_length);
     for(i = 0;i < ev->num_responses;i++){
-        hci_inq_result_t *result = ev->result + i;
-        LOGD("%04x:%2x:%06x mode %x,class : %x,clock_offset %x",result->bd_addr.nap,
+        hci_inq_result_t *result __unused = ev->result + i;
+        EV_LOGD("%04x:%2x:%06x mode %x,class : %x,clock_offset %x",result->bd_addr.nap,
                 result->bd_addr.uap,result->bd_addr.lap,result->page_scan_rep_mode,
                 result->dev_class,result->clock_offset);
     }
@@ -425,7 +423,7 @@ static void hci_ev_inquiry_result(hci_ev_inquiry_result_t *ev)
 static void hci_ev_conn_complete(hci_ev_conn_complete_t *ev)
 {
     blk_t *blk;
-    LOGD("%04x:%02x:%06x Connect Complete %s,handle %x link type %x"
+    EV_LOGD("%04x:%02x:%06x Connect Complete %s,handle %x link type %x"
             "encryption enable %x",
             ev->bd_addr.nap,ev->bd_addr.nap,ev->bd_addr.lap,
             hci_error_string(ev->status),ev->handle,ev->link_type,ev->enc_enable);
@@ -436,7 +434,7 @@ static void hci_ev_conn_complete(hci_ev_conn_complete_t *ev)
 
 static void hci_ev_disconnect_complete(hci_ev_disconnect_complete_t *ev)
 {
-    LOGD("Disconnect Complete %s,handle %x,reason %x",
+    EV_LOGD("Disconnect Complete %s,handle %x,reason %x",
             hci_error_string(ev->status),ev->handle,ev->reason);
     free_blk(get_blk(ev->handle,hci_blks,MAX_ACL_CONNECTIONS));
 }
@@ -444,7 +442,7 @@ static void hci_ev_disconnect_complete(hci_ev_disconnect_complete_t *ev)
 static void hci_ev_conn_request(hci_ev_conn_request_t *ev)
 {
     //bd_addr_t bd_addr = {0xa11cf3,0x18,0x000d};
-    LOGD("%04x:%02x:%06x device class : %x link type %x",
+    EV_LOGD("%04x:%02x:%06x device class : %x link type %x",
             ev->bd_addr.nap,ev->bd_addr.uap,ev->bd_addr.lap,
             ev->dev_class,ev->link_type);
     hci_accept_connection(&(ev->bd_addr),HCI_MASTER);
@@ -452,9 +450,14 @@ static void hci_ev_conn_request(hci_ev_conn_request_t *ev)
 
 static void hci_ev_pin_code_req(hci_ev_pin_code_req_t *ev)
 {
-    LOGD("%04x:%02x:%06x",ev->bd_addr.nap,ev->bd_addr.uap,
+    EV_LOGD("%04x:%02x:%06x",ev->bd_addr.nap,ev->bd_addr.uap,
             ev->bd_addr.lap);
     hci_pin_code_req_reply(&(ev->bd_addr),4,(u8*)"0000");
+}
+
+static void hci_ev_hw_error(hci_ev_hw_error_t *ev)
+{
+    EV_LOGD("hardware error %x",ev->code);
 }
 
 static const event_handler_t event_handlers[HCI_MAX_EVENT_OPCODE] = {
@@ -465,6 +468,7 @@ static const event_handler_t event_handlers[HCI_MAX_EVENT_OPCODE] = {
     [HCI_EV_PIN_CODE_REQ]       = hci_ev_pin_code_req,
     [HCI_EV_COMMAND_COMPLETE]   = hci_ev_command_complete,
     [HCI_EV_COMMAND_STATUS]     = hci_ev_command_status,
+    [HCI_EV_HARDWARE_ERROR]     = hci_ev_hw_error,
 };
 
 void hci_event_handler(hci_event_t *event)
@@ -472,9 +476,9 @@ void hci_event_handler(hci_event_t *event)
     if(event->event_code > 0 
             && event->event_code < HCI_MAX_EVENT_OPCODE
       ){
-#ifdef __LOG_HCI_EVENT__
-        LOGD("[E] %s",event_strings[event->event_code]);
-#endif
+
+        EV_LOGD("%s",event_strings[event->event_code]);
+
         if(event_handlers[event->event_code]) {
             event_handlers[event->event_code](event);
         } else {
