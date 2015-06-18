@@ -8,7 +8,7 @@
 #include <acl.h>
 __BEGIN_DECLS
 
-#define __SIGNALING u8 code;u16 identifier;u8 length
+#define __SIGNALING u8 code;u8 identifier;u16 length
 
 typedef struct {
     u16 length;
@@ -41,6 +41,22 @@ typedef struct {
     u16 result;
     u16 status;
 } __packed l2cap_connection_response_t;
+
+typedef struct {
+    __SIGNALING;
+    u16 dest_cid;
+    u16  cflag;
+    u8  mtu_type;
+    u8  mtu_length;
+    u16 max_mtu;
+} __packed l2cap_configure_request_t;
+
+typedef struct {
+    __SIGNALING;
+    u16 src_cid;
+    u16 cflag;
+    u16 result;
+} __packed l2cap_configure_response_t;
 
 __END_DECLS
 #endif

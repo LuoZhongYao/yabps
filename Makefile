@@ -4,3 +4,6 @@ all :
 
 clean :
 	ndk-build clean
+
+wire :
+	adb pull /data/user/hci.hex

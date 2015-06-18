@@ -3,6 +3,10 @@
 *.ko
 *.obj
 *.elf
+*.bin
+*.log
+*.hex
+*.txt
 
 # Precompiled Headers
 *.gch
