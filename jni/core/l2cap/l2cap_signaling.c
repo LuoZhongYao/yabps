@@ -8,6 +8,16 @@
 #define SIG_LOGD(...)
 #endif
 
+/*************** Signaling Identifier *****************/
+static u8 sig_id(void)
+{
+    static u8 id = 0;
+    id++;
+    if(id == 0)
+        id = 1;
+    return id;
+}
+
 void *alloc_l2cap_signaling_packed(l2cap_signaling_t **sig,u16 length)
 {
     l2cap_t *l2cap;
@@ -15,15 +25,16 @@ void *alloc_l2cap_signaling_packed(l2cap_signaling_t **sig,u16 length)
     buffer = alloc_l2cap_packed(&l2cap,sizeof(l2cap_signaling_t) + length);
     assert(l2cap);
     *sig = (__typeof__(*sig))l2cap->payload;
+    (*sig)->identifier = sig_id();
     return buffer;
 }
 
-int l2cap_signaling_send(l2cap_signaling_t *sig,u16 cid,u16 handle,u8 flags)
+int l2cap_signaling_send(l2cap_signaling_t *sig,u16 cid,u16 handle)
 {
     l2cap_t *l2cap = packet_of(l2cap_t,sig);
     l2cap->cid = cid;
     l2cap->length =  sizeof(*sig) + sig->length;
-    return l2cap_send(l2cap,handle,flags);
+    return l2cap_send(l2cap,handle);
 }
 
 static void l2cap_connection_response(u8 identifier,u16 dest_cid,u16 src_cid,u16 result,u16 status)
@@ -39,10 +50,10 @@ static void l2cap_connection_response(u8 identifier,u16 dest_cid,u16 src_cid,u16
     res->dest_cid = dest_cid;
     res->src_cid = src_cid;
     res->result = result;
-    l2cap_signaling_send((l2cap_signaling_t *)res,1,0x32,2);
+    l2cap_signaling_send((l2cap_signaling_t *)res,1,0x32);
 }
 
-static void l2cap_connection_request(u8 identifier,u16 src_cid,u16 psm)
+static void l2cap_connection_request(u16 src_cid,u16 psm)
 {
     l2cap_connection_request_t *req;
     alloc_l2cap_signaling_packed((l2cap_signaling_t **)&req,4);
@@ -50,27 +61,25 @@ static void l2cap_connection_request(u8 identifier,u16 src_cid,u16 psm)
     req->psm = psm;
     req->length = 0x4;
     req->src_cid = src_cid;
-    req->identifier = identifier;
-    l2cap_signaling_send((l2cap_signaling_t *)req,1,0x32,2);
+    l2cap_signaling_send((l2cap_signaling_t *)req,1,0x32);
 }
 
-static void l2cap_configure_request(u8 identifier,u16 dest_cid,u16 cflag,u8 mtu_type,
+static void l2cap_configure_request(u16 dest_cid,u16 cflag,u8 mtu_type,
         u8 mtu_length,u16 max_mtu)
 {
     l2cap_configure_request_t *req;
     alloc_l2cap_signaling_packed((l2cap_signaling_t **)&req,8);
     req->code = 0x04;
-    req->identifier = identifier;
     req->length = 8;
     req->dest_cid = dest_cid;
     req->cflag = cflag;
     req->mtu_type = mtu_type;
     req->mtu_length = mtu_length;
     req->max_mtu = max_mtu;
-    l2cap_signaling_send((l2cap_signaling_t *)req,1,0x32,2);
+    l2cap_signaling_send((l2cap_signaling_t *)req,1,0x32);
 }
 
-static void l2cap_configure_response(u8 identifier,u16 src_cid,u16 cflag,u16 result)
+static void l2cap_configure_response(u8 identifier,u16 src_cid,u16 result)
 {
     l2cap_configure_response_t *req;
     alloc_l2cap_signaling_packed((l2cap_signaling_t **)&req,6);
@@ -78,8 +87,8 @@ static void l2cap_configure_response(u8 identifier,u16 src_cid,u16 cflag,u16 res
     req->identifier = identifier;
     req->length = 6;
     req->src_cid = src_cid;
-    req->result = 0x0;
-    l2cap_signaling_send((l2cap_signaling_t *)req,1,0x32,2);
+    req->result = result;
+    l2cap_signaling_send((l2cap_signaling_t *)req,1,0x32);
 }
 
 void l2cap_signaling_handler(l2cap_signaling_t *sig)
@@ -91,16 +100,16 @@ void l2cap_signaling_handler(l2cap_signaling_t *sig)
         {
             l2cap_connection_request_t *req = (l2cap_connection_request_t *)sig;
             SIG_LOGD("psm %x,src_cid %x",req->psm,req->src_cid);
-            //l2cap_connection_request(req->identifier,req->src_cid,req->psm);
             l2cap_connection_response(sig->identifier,req->src_cid,0x40,0,0);
-           l2cap_configure_request(0x67,0x40,0,0x01,0x02,1024);
+            l2cap_configure_request(0x40,0,0x01,0x02,1024);
         }
         break;
     case 0x03:
         break;
     case 0x04:
         {
-           l2cap_configure_response(0x67,0x40,0,0);
+            l2cap_configure_request_t *req = (l2cap_configure_request_t *)sig;
+            l2cap_configure_response(req->identifier,req->dest_cid,0);
         }
         break;
     }

@@ -22,7 +22,7 @@ void acl_handler(acl_t *acl)
     blk_t *blk;
     l2cap_t *l2cap;
     u16 length;
-    blk = get_blk(acl->handle,hci_blks,MAX_ACL_CONNECTIONS);
+    blk = get_blk(acl->handle,hci_blks,MAX_ACL_LINKS);
     if(blk == NULL) {
         LOGE("Can't found acl counnection");
         return;

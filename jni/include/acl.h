@@ -11,7 +11,7 @@
 
 __BEGIN_DECLS
 
-#define MAX_ACL_CONNECTIONS     7
+#define MAX_ACL_LINKS     7
 
 typedef struct {
     u16 handle:12;

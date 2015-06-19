@@ -16,7 +16,7 @@ typedef struct {
     u8  payload[0];
 } __packed l2cap_t;
 
-int l2cap_send(l2cap_t *l2cap,u16 handle,u8 flags);
+int l2cap_send(l2cap_t *l2cap,u16 handle);
 void l2cap_handler(l2cap_t *l2cap);
 void *alloc_l2cap_packed(l2cap_t **l2cap,u16 length);
 

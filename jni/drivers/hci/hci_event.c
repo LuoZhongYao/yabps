@@ -18,7 +18,7 @@ typedef void (*event_handler_t)();
 #define __EV_STR(x)     [x] = #x
 #define __CMD_STR(ocf)  #ocf    
 
-blk_t hci_blks[MAX_ACL_CONNECTIONS] = {0};
+blk_t hci_blks[MAX_ACL_LINKS] = {0};
 /****************************************************************
  * OCF opcode defines - Link Control Commands
  ***************************************************************/
@@ -427,7 +427,7 @@ static void hci_ev_conn_complete(hci_ev_conn_complete_t *ev)
             "encryption enable %x",
             ev->bd_addr.nap,ev->bd_addr.nap,ev->bd_addr.lap,
             hci_error_string(ev->status),ev->handle,ev->link_type,ev->enc_enable);
-    blk = alloc_blk(hci_blks,MAX_ACL_CONNECTIONS);
+    blk = alloc_blk(hci_blks,MAX_ACL_LINKS);
     assert(blk);
     blk->handle = ev->handle;
 }
@@ -436,16 +436,15 @@ static void hci_ev_disconnect_complete(hci_ev_disconnect_complete_t *ev)
 {
     EV_LOGD("Disconnect Complete %s,handle %x,reason %x",
             hci_error_string(ev->status),ev->handle,ev->reason);
-    free_blk(get_blk(ev->handle,hci_blks,MAX_ACL_CONNECTIONS));
+    free_blk(get_blk(ev->handle,hci_blks,MAX_ACL_LINKS));
 }
 
 static void hci_ev_conn_request(hci_ev_conn_request_t *ev)
 {
-    //bd_addr_t bd_addr = {0xa11cf3,0x18,0x000d};
     EV_LOGD("%04x:%02x:%06x device class : %x link type %x",
             ev->bd_addr.nap,ev->bd_addr.uap,ev->bd_addr.lap,
             ev->dev_class,ev->link_type);
-    hci_accept_connection(&(ev->bd_addr),HCI_MASTER);
+    hci_accept_connection(&(ev->bd_addr),HCI_SLAVE);
 }
 
 static void hci_ev_pin_code_req(hci_ev_pin_code_req_t *ev)

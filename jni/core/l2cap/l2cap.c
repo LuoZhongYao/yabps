@@ -6,18 +6,38 @@
 #include <hci.h>
 #include <assert.h>
 
-#define acl_by_l2cap(s)   ({\
-    const void *__mptr = (s);\
-    (acl_t *)((u8 *)__mptr - offsetof(acl_t,payload));})
-
-int l2cap_send(l2cap_t *l2cap,u16 handle,u8 flags)
+int l2cap_send(l2cap_t *l2cap,u16 handle)
 {
+    u16 len,pos;
+    const u16 maxsize = 1024;
+    u8 flag = 0x02;
     acl_t *acl = packet_of(acl_t,l2cap);
     acl->handle = handle;
-    acl->flags = flags;
-    acl->length = l2cap->length + sizeof(*l2cap);
-    return hci_send(CHANNEL_ACL,acl,sizeof(*acl) + acl->length);
-}
+    len = l2cap->length + sizeof(*l2cap);
+    pos = 0;
+
+    LOGD("acl len %d",len);
+    while(len) {
+        if(len > maxsize) {
+            acl->flags = flag;
+            acl->length = maxsize;
+
+            hci_send(CHANNEL_ACL,acl,acl->length + sizeof(*acl));
+
+            pos += maxsize;
+            len -= maxsize;
+
+            memcpy(acl->payload,acl->payload + pos,len);
+            flag = 0x01;
+        } else {
+            acl->flags = flag;
+            acl->length = len;
+            hci_send(CHANNEL_ACL,acl,acl->length + sizeof(*acl));
+            break;
+        };
+    }
+    return 0;
+} 
 
 void *alloc_l2cap_packed(l2cap_t **l2cap,u16 length)
 {
