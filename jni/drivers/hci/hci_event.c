@@ -455,7 +455,7 @@ static void hci_ev_pin_code_req(hci_ev_pin_code_req_t *ev)
     hci_pin_code_req_reply(&(ev->bd_addr),4,(u8*)"0000");
 }
 
-static void hci_ev_hw_error(hci_ev_hw_error_t *ev)
+static void hci_ev_hw_error(hci_ev_hw_error_t *ev __unused)
 {
     EV_LOGD("hardware error %x",ev->code);
 }

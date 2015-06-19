@@ -1,7 +1,7 @@
 LOCAL_PATH 	:= $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE		:= route
+LOCAL_MODULE		:= hci
 LOCAL_CONLYFLAGS	:=  \
 	-D__LOG_HCI_EVENT__\
 	-D__LOG_ACL__\
