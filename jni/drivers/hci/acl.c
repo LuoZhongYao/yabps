@@ -3,6 +3,7 @@
 #include <hci.h>
 #include <zl/log.h>
 #include <zl/util.h>
+#include "hci_layer.h"
 #include <assert.h>
 
 #ifdef __LOG_ACL__
@@ -19,11 +20,11 @@ acl_t *alloc_acl_packed(u16 length) {
 
 void acl_handler(acl_t *acl)
 {
-    blk_t *blk;
+    hci_cbk_t *cbk;
     l2cap_t *l2cap;
     u16 length;
-    blk = get_blk(acl->handle,hci_blks,MAX_ACL_LINKS);
-    if(blk == NULL) {
+    cbk = find_hci_cbk(acl->handle);
+    if(cbk == NULL) {
         LOGE("Can't found acl counnection");
         return;
     }
@@ -31,34 +32,33 @@ void acl_handler(acl_t *acl)
     ACL_LOGD("handle %x,flags %x",acl->handle,acl->flags);
     if(acl->flags == 0x2) {
         l2cap = (void*)acl->payload;
-        __test_delete(blk->blk);
-        blk->total = l2cap->length;
-        blk->blk = malloc(sizeof(*l2cap) + blk->total);
+        __test_delete(cbk->blk);
+        cbk->total = l2cap->length;
+        cbk->blk = malloc(sizeof(*l2cap) + cbk->total);
         assert(blk->blk);
-        if(acl->length <= blk->total + sizeof(*l2cap))
+        if(acl->length <= cbk->total + sizeof(*l2cap))
             length = acl->length;
         else
-            length = blk->total + sizeof(*l2cap);
-        memcpy(blk->blk,acl->payload,length);
-        blk->length = length - sizeof(*l2cap);
-        blk->handle = acl->handle;
+            length = cbk->total + sizeof(*l2cap);
+        memcpy(cbk->blk,acl->payload,length);
+        cbk->length = length - sizeof(*l2cap);
     } else {
-        if(blk->blk != NULL) {
-            if(blk->length + acl->length <= blk->total) 
+        if(cbk->blk != NULL) {
+            if(cbk->length + acl->length <= cbk->total) 
                 length = acl->length;
             else
-                length = blk->total - blk->length;
-            memcpy(blk->blk + blk->length + sizeof(*l2cap),acl->payload,length);
-            blk->length += length;
+                length = cbk->total - cbk->length;
+            memcpy(cbk->blk + cbk->length + sizeof(*l2cap),acl->payload,length);
+            cbk->length += length;
         }
     }
 
     ACL_LOGD("cid %x,length %x",l2cap->cid,l2cap->length);
 
-    if(blk->length >= blk->total) {
-        l2cap = blk->blk;
-        blk->blk = NULL;
-        blk->length = 0;
+    if(cbk->length >= cbk->total) {
+        l2cap = cbk->blk;
+        cbk->blk = NULL;
+        cbk->length = 0;
         l2cap_handler(l2cap);
     }
 }

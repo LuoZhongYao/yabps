@@ -18,7 +18,6 @@ typedef void (*event_handler_t)();
 #define __EV_STR(x)     [x] = #x
 #define __CMD_STR(ocf)  #ocf    
 
-blk_t hci_blks[MAX_ACL_LINKS] = {0};
 /****************************************************************
  * OCF opcode defines - Link Control Commands
  ***************************************************************/
@@ -422,21 +421,22 @@ static void hci_ev_inquiry_result(hci_ev_inquiry_result_t *ev)
 
 static void hci_ev_conn_complete(hci_ev_conn_complete_t *ev)
 {
-    blk_t *blk;
     EV_LOGD("%04x:%02x:%06x Connect Complete %s,handle %x link type %x"
             "encryption enable %x",
             ev->bd_addr.nap,ev->bd_addr.nap,ev->bd_addr.lap,
             hci_error_string(ev->status),ev->handle,ev->link_type,ev->enc_enable);
-    blk = alloc_blk(hci_blks,MAX_ACL_LINKS);
-    assert(blk);
-    blk->handle = ev->handle;
+    if(ev->status == HCI_SUCCESS) {
+        hci_cbk_alloc(ev->handle,&ev->bd_addr);
+    } else {
+        LOGE("connection complete %x\n",ev->status);
+    }
 }
 
 static void hci_ev_disconnect_complete(hci_ev_disconnect_complete_t *ev)
 {
     EV_LOGD("Disconnect Complete %s,handle %x,reason %x",
             hci_error_string(ev->status),ev->handle,ev->reason);
-    free_blk(get_blk(ev->handle,hci_blks,MAX_ACL_LINKS));
+    hci_cbk_free(find_hci_cbk(ev->handle));
 }
 
 static void hci_ev_conn_request(hci_ev_conn_request_t *ev)
@@ -481,9 +481,9 @@ void hci_event_handler(hci_event_t *event)
         if(event_handlers[event->event_code]) {
             event_handlers[event->event_code](event);
         } else {
-            LOGE("[E] Unhandle Event %d",event->event_code);
+            LOGE("[ERR] Unhandle Event %d",event->event_code);
         }
     } else {
-        LOGE("[E] Invalid event code %d",event->event_code);
+        LOGE("[ERR] Invalid event code %d",event->event_code);
     }
 }

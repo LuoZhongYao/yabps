@@ -6,7 +6,6 @@
 #include <hci/hci_commmand.h>
 #include <hci/hci_event.h>
 #include <hci/hci_error.h>
-#include <blk.h>
 
 __BEGIN_DECLS
 
@@ -20,7 +19,6 @@ enum {
 
 int hci_send(transport_t channel,const void *msg,size_t mlen);
 int hci_receiv(transport_t channel,MessageStructure *src);
-extern blk_t hci_blks[];
 
 __END_DECLS
 
