@@ -67,7 +67,7 @@ NOTE
 */
 
 //#define ABCSP_EVENT(n)           abcsp_event(n)
-#define ABCSP_EVENT(n)  LOGD(#n)
+#define ABCSP_EVENT(n)  ABCSP_LOGD(#n)
 
 
 /****************************************************************************

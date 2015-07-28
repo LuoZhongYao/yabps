@@ -25,7 +25,7 @@ void acl_handler(acl_t *acl)
     u16 length;
     cbk = find_hci_cbk(acl->handle);
     if(cbk == NULL) {
-        LOGE("Can't found acl counnection");
+        LOGE("Can't found acl connection");
         return;
     }
 

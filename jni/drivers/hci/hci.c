@@ -9,7 +9,7 @@
 #include <util/dump.h>
 static dump_t *dump = NULL;
 void hci_dump(dump_t *,transport_t,const void*,size_t);
-#define __DUMP(ch,buff,len) ({if(dump == NULL) dump = new_dump("hci.hex");hci_dump(dump,(ch),(buff),(len));})
+#define __DUMP(ch,buff,len) ({if(dump == NULL) dump = new_dump("/data/user/hci.hex");hci_dump(dump,(ch),(buff),(len));})
 #else
 #define __DUMP(...)
 #endif

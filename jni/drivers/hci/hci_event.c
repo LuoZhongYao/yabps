@@ -8,6 +8,7 @@
 #else
 #define EV_LOGD(...)
 #endif
+#define EV_LOGE(fmt,...)        LOGE("[EVE] "fmt,##__VA_ARGS__)
 
 typedef void (*event_handler_t)();
 
@@ -16,7 +17,7 @@ typedef void (*event_handler_t)();
 
 #ifdef __LOG_HCI_EVENT__
 #define __EV_STR(x)     [x] = #x
-#define __CMD_STR(ocf)  #ocf    
+#define __CMD_STR(opcode)  [opcode & HCI_OPCODE_MASK] = #opcode
 
 /****************************************************************
  * OCF opcode defines - Link Control Commands
@@ -110,7 +111,7 @@ static const char *cmd_host_bb_str[] = {
     __CMD_STR(HCI_READ_STORED_LINK_KEY      ),
     __CMD_STR(HCI_WRITE_STORED_LINK_KEY     ),
     __CMD_STR(HCI_DELETE_STORED_LINK_KEY    ),
-    __CMD_STR(HCI_CHANGE_LOCAL_NAME         ),
+    __CMD_STR(HCI_WRITE_LOCAL_NAME          ),
     __CMD_STR(HCI_READ_LOCAL_NAME           ),
     __CMD_STR(HCI_READ_CONN_ACCEPT_TIMEOUT  ),
     __CMD_STR(HCI_WRITE_CONN_ACCEPT_TIMEOUT ),
@@ -339,6 +340,8 @@ static void hci_ev_command_complete(hci_event_t *ev)
 
     case HCI_READ_BUFFER_SIZE:
         hci_write_scan_enable(HCI_SCAN_ENABLE_INQ_AND_PAGE);
+        hci_write_local_name((const u8 *)"yabps",5);
+        //hci_read_local_name();
         break;
 
     case HCI_LINK_KEY_REQ_REPLY:
@@ -422,13 +425,13 @@ static void hci_ev_inquiry_result(hci_ev_inquiry_result_t *ev)
 static void hci_ev_conn_complete(hci_ev_conn_complete_t *ev)
 {
     EV_LOGD("%04x:%02x:%06x Connect Complete %s,handle %x link type %x"
-            "encryption enable %x",
-            ev->bd_addr.nap,ev->bd_addr.nap,ev->bd_addr.lap,
+            " encryption enable %x",
+            ev->bd_addr.nap,ev->bd_addr.uap,ev->bd_addr.lap,
             hci_error_string(ev->status),ev->handle,ev->link_type,ev->enc_enable);
     if(ev->status == HCI_SUCCESS) {
         hci_cbk_alloc(ev->handle,&ev->bd_addr);
     } else {
-        LOGE("connection complete %x\n",ev->status);
+        EV_LOGE("connection complete %x\n",ev->status);
     }
 }
 
@@ -481,9 +484,9 @@ void hci_event_handler(hci_event_t *event)
         if(event_handlers[event->event_code]) {
             event_handlers[event->event_code](event);
         } else {
-            LOGE("[ERR] Unhandle Event %d",event->event_code);
+            EV_LOGE("Unhandle Event %x",event->event_code);
         }
     } else {
-        LOGE("[ERR] Invalid event code %d",event->event_code);
+        EV_LOGE("Invalid event code %x",event->event_code);
     }
 }

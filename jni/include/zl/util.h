@@ -21,7 +21,17 @@ __BEGIN_DECLS
         (type *)( (char *)__mptr - offsetof(type,member) );})
 
 #define __new(t)        (t *)calloc(1,sizeof(t))
+#define __alloc(n)      calloc(1,n)
 #define __test_delete(x) do{if((x)) {delete((x));}(x) = NULL;}while(0)
+
+#define max(a,b) \
+    ({ __typeof__ (a) _a = (a); \
+     __typeof__ (b) _b = (b); \
+     _a > _b ? _a : _b; })
+#define min(a,b) \
+    ({ __typeof__ (a) _a = (a); \
+     __typeof__ (b) _b = (b); \
+     _a < _b ? _a : _b; })
 
 __END_DECLS
 #endif

@@ -121,7 +121,7 @@ __BEGIN_DECLS
 #define HCI_READ_STORED_LINK_KEY       (HCI_HOST_BB | 0x000D)
 #define HCI_WRITE_STORED_LINK_KEY      (HCI_HOST_BB | 0x0011)
 #define HCI_DELETE_STORED_LINK_KEY     (HCI_HOST_BB | 0x0012)
-#define HCI_CHANGE_LOCAL_NAME          (HCI_HOST_BB | 0x0013)
+#define HCI_WRITE_LOCAL_NAME           (HCI_HOST_BB | 0x0013)
 #define HCI_READ_LOCAL_NAME            (HCI_HOST_BB | 0x0014)
 #define HCI_READ_CONN_ACCEPT_TIMEOUT   (HCI_HOST_BB | 0x0015)
 #define HCI_WRITE_CONN_ACCEPT_TIMEOUT  (HCI_HOST_BB | 0x0016)
@@ -579,6 +579,13 @@ __BEGIN_DECLS
 #define HCI_MIN_PIN_LENGTH  (0x01)
 #define HCI_MAX_PIN_LENGTH  (0x10)
 
+/******************************************************************************
+ *
+ *  HCI Local Name Length
+ *
+ *****************************************************************************/
+#define HCI_MAX_LOCAL_NAME_LENGTH 248
+
 /*-----------------------------------------------------------------------------*
  *
  *   Size of link keys
@@ -699,9 +706,6 @@ __BEGIN_DECLS
 #define HCI_AUTHENTICATED_COMBINATION_KEY   (5)
 #define HCI_CHANGED_COMBINATION_KEY         (6)
 #define HCI_KEY_TYPE_UNKNOWN                (0xFF)
-
-
-
 
 
 #define __COMMAND u16 op_code;u8 length
@@ -865,6 +869,15 @@ typedef struct {
     __COMMAND;
 }__packed hci_read_buffer_size_t;
 
+typedef struct {
+    __COMMAND;
+    u8 name[HCI_MAX_LOCAL_NAME_LENGTH];
+}__packed hci_write_local_name_t;
+
+typedef struct {
+    __COMMAND;
+}__packed hci_read_local_name_t;
+
 void hci_inquiry(u32 lap,u8 inquiry_length,u8 num_responses);
 void hci_accept_connection(bd_addr_t *bd_addr,u8 role);
 void hci_pin_code_req_reply(bd_addr_t *bd_addr,u8 pin_length,u8 *pin);
@@ -874,6 +887,8 @@ void hci_read_buffer_size(void);
 void hci_host_buffer_size(u16 acl_packet_length,u8 sco_packet_length,
         u16 acl_total_packets,u16 sco_total_packets);
 void hci_read_local_features(void);
+void hci_write_local_name(const u8 *name,const u16 len);
+void hci_read_local_name(void);
 
 
 

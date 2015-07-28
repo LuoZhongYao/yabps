@@ -81,9 +81,9 @@ FUNCTIONS
 extern void abcsp_start_bcsp_timer(void);
 extern void abcsp_start_tshy_timer(void);
 extern void abcsp_start_tconf_timer(void);
-#define ABCSP_START_BCSP_TIMER(t)	LOGD("ABCSP_START_BCSP_TIMER"#t)//abcsp_start_bcsp_timer()
-#define ABCSP_START_TSHY_TIMER(t)	LOGD("ABCSP_START_TSHY_TIMER"#t)//abcsp_start_tshy_timer()
-#define ABCSP_START_TCONF_TIMER(t)	LOGD("ABCSP_START_TCONF_TIMER"#t)//abcsp_start_tconf_timer()
+#define ABCSP_START_BCSP_TIMER(t)	ABCSP_LOGD("ABCSP_START_BCSP_TIMER"#t)//abcsp_start_bcsp_timer()
+#define ABCSP_START_TSHY_TIMER(t)	ABCSP_LOGD("ABCSP_START_TSHY_TIMER"#t)//abcsp_start_tshy_timer()
+#define ABCSP_START_TCONF_TIMER(t)	ABCSP_LOGD("ABCSP_START_TCONF_TIMER"#t)//abcsp_start_tconf_timer()
 
 /****************************************************************************
 NAMES
@@ -105,9 +105,9 @@ FUNCTIONS
 extern void abcsp_cancel_bcsp_timer(void);
 extern void abcsp_cancel_tshy_timer(void);
 extern void abcsp_cancel_tconf_timer(void);
-#define ABCSP_CANCEL_BCSP_TIMER(t)	LOGD("ABCSP_CANCEL_BCSP_TIMER" #t)//abcsp_cancel_bcsp_timer()
-#define ABCSP_CANCEL_TSHY_TIMER(t)	LOGD("ABCSP_CANCEL_TSHY_TIMER"#t)//abcsp_cancel_tshy_timer()
-#define ABCSP_CANCEL_TCONF_TIMER(t)	LOGD("ABCSP_CANCEL_TCONF_TIMER"#t)//abcsp_cancel_tconf_timer()
+#define ABCSP_CANCEL_BCSP_TIMER(t)	ABCSP_LOGD("ABCSP_CANCEL_BCSP_TIMER" #t)//abcsp_cancel_bcsp_timer()
+#define ABCSP_CANCEL_TSHY_TIMER(t)	ABCSP_LOGD("ABCSP_CANCEL_TSHY_TIMER"#t)//abcsp_cancel_tshy_timer()
+#define ABCSP_CANCEL_TCONF_TIMER(t)	ABCSP_LOGD("ABCSP_CANCEL_TCONF_TIMER"#t)//abcsp_cancel_tconf_timer()
 
 #ifdef __cplusplus
 }

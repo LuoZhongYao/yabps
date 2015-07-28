@@ -21,7 +21,7 @@ void hci_dump(dump_t *dump,transport_t channel,
     fprintf(dump,"\n%06x %02x ",0x00,channel); 
     for(size_t i = 0;i < len;i++) {
         if(!((i + 1) % 16))
-            fprintf(dump,"\n%04x ",i + 1);
+            fprintf(dump,"\n%06x ",i + 1);
         fprintf(dump,"%02x ",((u8*)buffer)[i]);
     }
     fflush(dump);

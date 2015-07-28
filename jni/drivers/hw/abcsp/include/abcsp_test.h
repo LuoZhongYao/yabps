@@ -21,6 +21,13 @@ static const char abcsp_test_h_id[]
   = "$Id: abcsp_test.h,v 1.1 2001/07/06 20:11:03 cjo Exp $";
 #endif
 
+#ifdef __LOG_ABCSP__
+#define ABCSP_LOGD(fmt,...) ABCSP_LOGD("[BSP] "fmt,##__VA_ARGS__)
+#else
+#define ABCSP_LOGD(...)
+#endif
+#define ABCSP_LOGE(fmt,...) LOGE("[BSP] "fmt,##__VA_ARGS__)
+
 #ifdef ABCSP_TEST
 
 #include "abcsp.h"
@@ -33,11 +40,11 @@ static const char abcsp_test_h_id[]
 #include "config_le.h"
 
 
-#define test_abcsp_event(n) LOGD(#n)
+#define test_abcsp_event(n) ABCSP_LOGD(#n)
 //extern void test_abcsp_event(unsigned e);
-#define test_abcsp_req_pumptxmsgs() LOGD("Req pumptxmsgs")
+#define test_abcsp_req_pumptxmsgs() ABCSP_LOGD("Req pumptxmsgs")
 //extern void test_abcsp_req_pumptxmsgs(void);
-#define test_abcsp_panic(e) do{LOGD(#e);exit(1);}while(0)
+#define test_abcsp_panic(e) do{ABCSP_LOGE(#e);exit(1);}while(0)
 //extern void test_abcsp_panic(unsigned e);
 extern ABCSP_RXMSG *test_abcsp_rxmsg_create(unsigned len);
 extern char *test_abcsp_rxmsg_getbuf(ABCSP_RXMSG *m, unsigned *n);
