@@ -10,6 +10,11 @@
 #include <bd_addr.h>
 __BEGIN_DECLS
 
+
+#define cbk_of(ptr) ({\
+    const void *__mptr = (ptr);\
+    (cbk_t*)((u8 *)__mptr - offsetof(cbk_t,private_data));})
+
 typedef struct {
     struct list_head list;
     u8  private_data[0];

@@ -4,9 +4,6 @@
 #include <assert.h>
 
 static LIST_HEAD(hci_links);
-#define cbk_of(ptr) ({\
-    const void *__mptr = (ptr);\
-    (cbk_t*)((u8 *)__mptr - offsetof(cbk_t,private_data));})
 
 void hci_chip_active(void)
 {

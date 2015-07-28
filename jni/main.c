@@ -1,13 +1,14 @@
-#include "zl/log.h"
+#include <zl/log.h>
 #include "arch/rda/5876/rda5876.h"
 #include "drivers/hw/abcsp/include/abcsp.h"
 #include <termio.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
-#include "drv.h"
-#include "hci.h"
-#include "zl/types.h"
+#include <drv.h>
+#include <hci.h>
+#include <l2cap.h>
+#include <zl/types.h>
 extern int serial_open(const char *path);
 extern int serial_configure();
 extern int serial_write();
@@ -31,6 +32,7 @@ int main(int argc,char **argv) {
     /************ ***********************/
     serial_start();
     abcsp_init();
+    register_l2cap_listen(SDP_PSM,NULL,NULL);
     while(1) 
         sleep(1);
     serial_stop();

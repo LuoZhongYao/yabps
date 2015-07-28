@@ -63,20 +63,20 @@ __BEGIN_DECLS
 #define L2CAP_INVALID_CID           0x0002
 
 /* Connection response results */
-#define L2CAP_CONN_SUCCESS 0x0000
-#define L2CAP_CONN_PND 0x0001
-#define L2CAP_CONN_REF_PSM 0x0002
-#define L2CAP_CONN_REF_SEC 0x0003
-#define L2CAP_CONN_REF_RES 0x0004
-#define L2CAP_CONN_CFG_TO 0x0005 /* Implementation specific result */
+#define L2CAP_CONN_SUCCESS  0x0000
+#define L2CAP_CONN_PND      0x0001
+#define L2CAP_CONN_REF_PSM  0x0002
+#define L2CAP_CONN_REF_SEC  0x0003
+#define L2CAP_CONN_REF_RES  0x0004
+#define L2CAP_CONN_CFG_TO   0x0005 /* Implementation specific result */
 
 /* Echo response results */
-#define L2CAP_ECHO_RCVD 0x00
-#define L2CAP_ECHO_TO 0x01
+#define L2CAP_ECHO_RCVD     0x00
+#define L2CAP_ECHO_TO       0x01
 
 /* L2CAP segmentation */
-#define L2CAP_ACL_START 0x02
-#define L2CAP_ACL_CONT 0x01
+#define L2CAP_ACL_START     0x02
+#define L2CAP_ACL_CONT      0x01
 
 /* L2CAP config default parameters */
 #define L2CAP_CFG_DEFAULT_INMTU 672 /* Two Baseband DH5 packets (2*341=682) minus the Baseband ACL 
@@ -84,10 +84,10 @@ __BEGIN_DECLS
 #define L2CAP_CFG_DEFAULT_OUTFLUSHTO 0xFFFF
 
 /* L2CAP configuration parameter masks */
-#define L2CAP_CFG_IR 0x01
-#define L2CAP_CFG_IN_SUCCESS 0x02
-#define L2CAP_CFG_OUT_SUCCESS 0x04
-#define L2CAP_CFG_OUT_REQ 0x08
+#define L2CAP_CFG_IR            0x01
+#define L2CAP_CFG_IN_SUCCESS    0x02
+#define L2CAP_CFG_OUT_SUCCESS   0x04
+#define L2CAP_CFG_OUT_REQ       0x08
 
 enum l2cap_state {
     L2CAP_CLOSED,
@@ -123,21 +123,21 @@ void *alloc_l2cap_signaling_packed(l2cap_signaling_t**sig,u16 length);
 typedef struct {
     __SIGNALING;
     u16 psm;
-    u16 src_cid;
+    u16 scid;
 } __packed l2cap_connection_request_t;
 
 typedef struct {
     __SIGNALING;
-    u16 dest_cid;
-    u16 src_cid;
+    u16 dcid;
+    u16 scid;
     u16 result;
     u16 status;
 } __packed l2cap_connection_response_t;
 
 typedef struct {
     __SIGNALING;
-    u16 dest_cid;
-    u16  cflag;
+    u16 dcid;
+    u16 cflag;
     u8  mtu_type;
     u8  mtu_length;
     u16 max_mtu;
@@ -145,7 +145,7 @@ typedef struct {
 
 typedef struct {
     __SIGNALING;
-    u16 src_cid;
+    u16 scid;
     u16 cflag;
     u16 result;
 } __packed l2cap_configure_response_t;

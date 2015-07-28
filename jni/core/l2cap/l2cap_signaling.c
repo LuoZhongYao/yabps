@@ -1,6 +1,7 @@
 #include <l2cap.h>
 #include <assert.h>
 #include <zl/log.h>
+#include "l2cap_layer.h"
 
 #ifdef __LOG_L2CAP__
 #define SIG_LOGD(fmt,...)   LOGD("[SIG] "fmt,##__VA_ARGS__)
@@ -37,41 +38,25 @@ int l2cap_signaling_send(l2cap_signaling_t *sig,u16 handle)
     return l2cap_send(l2cap,handle);
 }
 
-static void l2cap_connection_response(u8 identifier,u16 dest_cid,u16 src_cid,u16 result,u16 status)
-{
-    l2cap_connection_response_t *res;
-    //l2cap_signaling_t *sig;
-    alloc_l2cap_signaling_packed((l2cap_signaling_t **)&res,8);
-    //res = (l2cap_connection_response_t*)sig->payload;
-    res->length = 8;
-    res->status = status;
-    res->code = 0x03;
-    res->identifier = identifier;
-    res->dest_cid = dest_cid;
-    res->src_cid = src_cid;
-    res->result = result;
-    l2cap_signaling_send((l2cap_signaling_t *)res,0x32);
-}
-
-static void l2cap_connection_request(u16 src_cid,u16 psm)
+static void l2cap_connection_request(u16 scid,u16 psm)
 {
     l2cap_connection_request_t *req;
     alloc_l2cap_signaling_packed((l2cap_signaling_t **)&req,4);
     req->code = 0x02;
     req->psm = psm;
     req->length = 0x4;
-    req->src_cid = src_cid;
+    req->scid = scid;
     l2cap_signaling_send((l2cap_signaling_t *)req,0x32);
 }
 
-static void l2cap_configure_request(u16 dest_cid,u16 cflag,u8 mtu_type,
+static void l2cap_configure_request(u16 dcid,u16 cflag,u8 mtu_type,
         u8 mtu_length,u16 max_mtu)
 {
     l2cap_configure_request_t *req;
     alloc_l2cap_signaling_packed((l2cap_signaling_t **)&req,8);
     req->code = 0x04;
     req->length = 8;
-    req->dest_cid = dest_cid;
+    req->dcid = dcid;
     req->cflag = cflag;
     req->mtu_type = mtu_type;
     req->mtu_length = mtu_length;
@@ -79,16 +64,44 @@ static void l2cap_configure_request(u16 dest_cid,u16 cflag,u8 mtu_type,
     l2cap_signaling_send((l2cap_signaling_t *)req,0x32);
 }
 
-static void l2cap_configure_response(u8 identifier,u16 src_cid,u16 result)
+static void l2cap_configure_response(u8 identifier,u16 scid,u16 result)
 {
     l2cap_configure_response_t *req;
     alloc_l2cap_signaling_packed((l2cap_signaling_t **)&req,6);
     req->code = 0x05;
     req->identifier = identifier;
     req->length = 6;
-    req->src_cid = src_cid;
+    req->scid = scid;
     req->result = result;
     l2cap_signaling_send((l2cap_signaling_t *)req,0x32);
+}
+
+static void l2cap_conn_response(l2cap_cbk_t *cbk,u8 identifier,u16 result,u16 status)
+{
+    l2cap_connection_response_t *res;
+    alloc_l2cap_signaling_packed((l2cap_signaling_t **)&res,8);
+    res->length = 8;
+    res->status = status;
+    res->code = L2CAP_CONN_RSP;
+    res->identifier = identifier;
+    res->dcid = cbk->dcid;
+    res->scid = cbk->scid;
+    res->result = result;
+    l2cap_signaling_send((l2cap_signaling_t *)res,0x32);
+}
+
+static void l2cap_conn_req(l2cap_connection_request_t *req)
+{
+    l2cap_listen_t *listen = find_l2cap_listen(req->psm);
+    if(listen == NULL) {
+        SIG_LOGD("psm %x,scid %x",req->psm,req->scid);
+        //l2cap_conn_response(req->identifier,req->scid,
+        //        0x40,L2CAP_CONN_REF_RES,0);
+    } else {
+        l2cap_cbk_t *cbk = l2cap_alloc_cbk(listen,req->scid,L2CAP_CONFIG);
+        l2cap_conn_response(cbk,req->identifier,L2CAP_CONN_SUCCESS,0);
+        l2cap_configure_request(req->scid,0,1,2,1024);
+    }
 }
 
 void l2cap_signaling_handler(l2cap_signaling_t *sig)
@@ -99,17 +112,15 @@ void l2cap_signaling_handler(l2cap_signaling_t *sig)
     case L2CAP_CONN_REQ:
         {
             l2cap_connection_request_t *req = (l2cap_connection_request_t *)sig;
-            SIG_LOGD("psm %x,src_cid %x",req->psm,req->src_cid);
-            l2cap_connection_response(sig->identifier,req->src_cid,0x40,0,0);
-            l2cap_configure_request(0x40,0,0x01,0x02,1024);
+            l2cap_conn_req(req);
         }
         break;
     case L2CAP_CONN_RSP:
         break;
     case L2CAP_CFG_REQ:
         {
-            l2cap_configure_request_t *req = (l2cap_configure_request_t *)sig;
-            l2cap_configure_response(req->identifier,req->dest_cid,0);
+            //l2cap_configure_request_t *req = (l2cap_configure_request_t *)sig;
+            //l2cap_configure_response(req->identifier,req->dcid,0);
         }
         break;
     }
