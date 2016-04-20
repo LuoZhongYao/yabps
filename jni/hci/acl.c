@@ -1,3 +1,5 @@
+#define TAG "ACL"
+
 #include <acl.h>
 #include <l2cap.h>
 #include <hci.h>
@@ -5,12 +7,6 @@
 #include <zl/util.h>
 #include "hci_layer.h"
 #include <assert.h>
-
-#ifdef __LOG_ACL__
-#define ACL_LOGD(fmt,...)   LOGD("[ACL] "fmt,##__VA_ARGS__)
-#else
-#define ACL_LOGD(...)
-#endif
 
 acl_t *alloc_acl_packed(u16 length) {
     acl_t *acl = malloc(sizeof(*acl) + length);
@@ -29,7 +25,7 @@ void acl_handler(acl_t *acl)
         return;
     }
 
-    ACL_LOGD("handle %x,flags %x",acl->handle,acl->flags);
+    LOGD("handle %x,flags %x",acl->handle,acl->flags);
     if(acl->flags == 0x2) {
         l2cap = (void*)acl->payload;
         __test_delete(cbk->blk);
@@ -53,7 +49,7 @@ void acl_handler(acl_t *acl)
         }
     }
 
-    ACL_LOGD("cid %x,length %x",l2cap->cid,l2cap->length);
+    LOGD("cid %x,length %x",l2cap->cid,l2cap->length);
 
     if(cbk->length >= cbk->total) {
         l2cap = cbk->blk;

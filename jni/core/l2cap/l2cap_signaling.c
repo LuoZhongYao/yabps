@@ -1,13 +1,9 @@
+#define TAG "L2CAP"
+
 #include <l2cap.h>
 #include <assert.h>
 #include <zl/log.h>
 #include "l2cap_layer.h"
-
-#ifdef __LOG_L2CAP__
-#define SIG_LOGD(fmt,...)   LOGD("[SIG] "fmt,##__VA_ARGS__)
-#else
-#define SIG_LOGD(...)
-#endif
 
 /*************** Signaling Identifier *****************/
 static u8 sig_id(void)
@@ -94,7 +90,7 @@ static void l2cap_conn_req(l2cap_connection_request_t *req)
 {
     l2cap_listen_t *listen = find_l2cap_listen(req->psm);
     if(listen == NULL) {
-        SIG_LOGD("psm %x,scid %x",req->psm,req->scid);
+        LOGD("psm %x,scid %x",req->psm,req->scid);
         //l2cap_conn_response(req->identifier,req->scid,
         //        0x40,L2CAP_CONN_REF_RES,0);
     } else {
@@ -106,22 +102,19 @@ static void l2cap_conn_req(l2cap_connection_request_t *req)
 
 void l2cap_signaling_handler(l2cap_signaling_t *sig)
 {
-    SIG_LOGD("code %x,identifier %x,length %x",
+    LOGD("code %x,identifier %x,length %x",
             sig->code,sig->identifier,sig->length);
     switch(sig->code) {
-    case L2CAP_CONN_REQ:
-        {
-            l2cap_connection_request_t *req = (l2cap_connection_request_t *)sig;
-            l2cap_conn_req(req);
-        }
-        break;
+    case L2CAP_CONN_REQ: {
+        l2cap_connection_request_t *req = (l2cap_connection_request_t *)sig;
+        l2cap_conn_req(req);
+    } break;
+
     case L2CAP_CONN_RSP:
         break;
-    case L2CAP_CFG_REQ:
-        {
-            //l2cap_configure_request_t *req = (l2cap_configure_request_t *)sig;
-            //l2cap_configure_response(req->identifier,req->dcid,0);
-        }
-        break;
+    case L2CAP_CFG_REQ: {
+        //l2cap_configure_request_t *req = (l2cap_configure_request_t *)sig;
+        //l2cap_configure_response(req->identifier,req->dcid,0);
+    } break;
     }
 }

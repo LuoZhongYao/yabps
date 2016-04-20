@@ -1,3 +1,5 @@
+#define TAG "MAIN"
+
 #include <zl/log.h>
 #include "arch/rda/5876/rda5876.h"
 #include "drivers/hw/abcsp/include/abcsp.h"

@@ -1,3 +1,5 @@
+#define TAG "L2CAP"
+
 #include <zl/types.h>
 #include <zl/log.h>
 #include <zl/util.h>
@@ -6,12 +8,6 @@
 #include <hci.h>
 #include "l2cap_layer.h"
 #include <assert.h>
-
-#ifdef __LOG_L2CAP__
-#define L2C_LOGD(fmt,...)   LOGD("[L2C] "fmt,##__VA_ARGS__)
-#else
-#define L2C_LOGD(...)
-#endif
 
 int l2cap_send(l2cap_t *l2cap,u16 handle)
 {
@@ -55,7 +51,7 @@ void *alloc_l2cap_packed(l2cap_t **l2cap,u16 length)
 
 void l2cap_handler(l2cap_t *l2cap)
 {
-    L2C_LOGD("cid %x",l2cap->cid);
+    LOGD("cid %x",l2cap->cid);
     switch(l2cap->cid) {
     case L2CAP_SIG_CID:
         l2cap_signaling_handler((l2cap_signaling_t*)l2cap->payload);
@@ -66,9 +62,9 @@ void l2cap_handler(l2cap_t *l2cap)
         {
             l2cap_cbk_t *l2c = find_l2cap_cbk(l2cap->cid);
             if(l2c) {
-                L2C_LOGD("state %x",l2c->state);
+                LOGD("state %x",l2c->state);
             } else {
-                L2C_LOGD("Unhandle cid %x",l2cap->cid);
+                LOGD("Unhandle cid %x",l2cap->cid);
             }
         }
         break;

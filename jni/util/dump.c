@@ -1,3 +1,5 @@
+#define TAG "DUMP"
+
 #include <util/dump.h>
 #include <errno.h>
 #include <string.h>

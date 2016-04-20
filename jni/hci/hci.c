@@ -1,4 +1,7 @@
+#define TAG "HCI"
+
 #include <assert.h>
+#include <btsnoop.h>
 #include <zl/util.h>
 #include <zl/log.h>
 #include <transport.h>
@@ -27,30 +30,24 @@ static const ch_handler_t channels [] = {
 
 int hci_receiv(transport_t channel,MessageStructure *src)
 {
-    __DUMP(channel,src->buf,src->buflen);
+    btsnoop_capture(channel,src->buf,true);
 #ifdef __LOG_HCI_CHANNEL__
-    switch(channel){
-    case CHANNEL_ACL:
-        LOGD("ACL");
-        break;
-    case CHANNEL_SCO:
-        LOGD("SCO");
-        break;
-    case CHANNEL_HCI:
-        LOGD("HCI");
-        break;
-    case CHANNEL_BCCMD:
-        LOGD("BCCMD");
-        break;
-    case CHANNEL_VM:
-        LOGD("VM");
-        break;
-    case CHANNEL_HQ:
-        LOGD("HQ");
-        break;
-    default:
-        break;
-    }
+    LOGD("receiv %s\n",
+         (char *const []){
+             "CHANNEL_UNRELIABLE",
+             "CHANNEL_RELIABLE",
+             "CHANNEL_BCCMD",    
+             "CHANNEL_HQ",    
+             "CHANNEL_DM",   
+             "CHANNEL_HCI",   
+             "CHANNEL_ACL",
+             "CHANNEL_SCO",
+             "CHANNEL_L2CAP",
+             "CHANNEL_RFCOMM",
+             "CHANNEL_SDP",
+             "CHANNEL_DFU",
+             "CHANNEL_VM",
+         }[channel]);
 #endif
     if(channel >= CHANNEL_UNRELIABLE &&
             channel < ARRAY_SIZE(channels) &&
@@ -65,7 +62,7 @@ int hci_receiv(transport_t channel,MessageStructure *src)
 int hci_send(transport_t channel,const void *buffer,size_t mlen)
 {
     MessageStructure *msg = __new(MessageStructure);
-    __DUMP((channel == CHANNEL_HCI ? 0x01 : channel),buffer,mlen);
+    btsnoop_capture(channel,buffer,false);
     msg->buf = (void*)buffer;
     msg->buflen = mlen;
     return abcsp_sendmsg((void*)msg,channel,1);
