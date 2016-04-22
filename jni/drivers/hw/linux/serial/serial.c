@@ -1,4 +1,4 @@
-#define TAG "SERIAL"
+#define TAG "ZL.SERIAL"
 
 #include <stdio.h>      /*标准输入输出定义*/
 #include <stdlib.h>     /*标准函数库定义*/

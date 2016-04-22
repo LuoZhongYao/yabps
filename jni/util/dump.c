@@ -1,4 +1,4 @@
-#define TAG "DUMP"
+#define TAG "ZL.DUMP"
 
 #include <util/dump.h>
 #include <errno.h>

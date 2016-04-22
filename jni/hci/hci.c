@@ -1,4 +1,4 @@
-#define TAG "HCI"
+#define TAG "ZL.HCI"
 
 #include <assert.h>
 #include <btsnoop.h>

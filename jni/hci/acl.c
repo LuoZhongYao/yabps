@@ -1,4 +1,4 @@
-#define TAG "ACL"
+#define TAG "ZL.ACL"
 
 #include <acl.h>
 #include <l2cap.h>
@@ -55,6 +55,6 @@ void acl_handler(acl_t *acl)
         l2cap = cbk->blk;
         cbk->blk = NULL;
         cbk->length = 0;
-        l2cap_handler(l2cap);
+        l2cap_handler(acl->handle,l2cap);
     }
 }

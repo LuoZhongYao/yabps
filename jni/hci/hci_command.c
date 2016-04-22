@@ -84,3 +84,12 @@ void hci_read_local_name(void)
     __DECAL(hci_read_local_name_t,HCI_READ_LOCAL_NAME,0);
     __SEND(0);
 }
+
+void hci_write_class_of_device(u32 class_of_device)
+{
+    __DECAL(hci_write_class_of_device_t,HCI_WRITE_CLASS_OF_DEVICE,0);
+    cmd->class_of_device[0] = class_of_device & 0xff;
+    cmd->class_of_device[1] = (class_of_device  >> 8) & 0xff;
+    cmd->class_of_device[2] = (class_of_device >> 16)& 0xff;
+    __SEND(0);
+}

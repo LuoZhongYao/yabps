@@ -84,7 +84,7 @@ static const char txmsg_c_id[]
 #include "abcsp_private.h"
 #include "config_txmsg.h"
 
-#define TAG "ABCSP"
+#define TAG "ZL.ABCSP"
 
 /* A message submitted to abcsp_sendmsg(). */
 typedef struct txmsg {

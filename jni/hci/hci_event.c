@@ -1,4 +1,4 @@
-#define TAG "HCI"
+#define TAG "ZL.HCI"
 
 #include <hci.h>
 #include <acl.h>
@@ -299,96 +299,102 @@ static void hci_ev_command_complete(hci_event_t *ev)
         hci_chip_active();
     } else {
         LOGD("%s Command %s,pkts number %d",
-                command_strings[msg->op_code >> 10][msg->op_code & HCI_OPCODE_MASK],
-                hci_error_string(msg->status),msg->num_hci_command_pkts);
+             command_strings[msg->op_code >> 10][msg->op_code & HCI_OPCODE_MASK],
+             hci_error_string(msg->status),msg->num_hci_command_pkts);
     } 
     switch(msg->op_code) {
     case HCI_SET_HCTOHOST_FLOW_CONTROL:
-        break;
+    break;
 
     case HCI_HOST_BUFFER_SIZE:
-        break;
+    break;
 
     case HCI_HOST_NUM_COMPLETED_PACKETS:
-        break;
+    break;
 
     case HCI_RESET:
-        break;
+    break;
 
     case HCI_WRITE_AUTH_ENABLE:
-        break;
+    break;
 
     case HCI_WRITE_ENC_MODE:
-        break;
+    break;
 
     case HCI_WRITE_SIMPLE_PAIRING_MODE:
-        break;
+    break;
 
     case HCI_WRITE_SIMPLE_PAIRING_DEBUG_MODE:
-        break;
+    break;
 
     case HCI_SET_EVENT_MASK:
-        break;
+    break;
 
     case HCI_READ_LOCAL_SUPP_FEATURES:
-        break;
+    break;
 
     case HCI_READ_BUFFER_SIZE:
+        hci_write_class_of_device(0x200000 | 0x000400);
+    break;
+
+    case HCI_WRITE_CLASS_OF_DEVICE:
         hci_write_scan_enable(HCI_SCAN_ENABLE_INQ_AND_PAGE);
+    break;
+
+    case HCI_WRITE_SCAN_ENABLE:
         hci_write_local_name((const u8 *)"yabps",5);
-        //hci_read_local_name();
-        break;
+    break;
 
     case HCI_LINK_KEY_REQ_REPLY:
-        break;
+    break;
 
     case HCI_LINK_KEY_REQ_NEG_REPLY:
-        break;
+    break;
 
     case HCI_PIN_CODE_REQ_REPLY:
-        break;
+    break;
 
     case HCI_PIN_CODE_REQ_NEG_REPLY:
-        break;
+    break;
 
     case HCI_IO_CAPABILITY_RESPONSE:
-        break;
+    break;
 
     case HCI_IO_CAPABILITY_REQUEST_NEG_REPLY:
-        break;
+    break;
 
     case HCI_USER_CONFIRMATION_REQUEST_REPLY:
-        break;
+    break;
 
     case HCI_USER_CONFIRMATION_REQUEST_NEG_REPLY:
-        break;
+    break;
 
     case HCI_USER_PASSKEY_REQUEST_REPLY:
-        break;
+    break;
 
     case HCI_USER_PASSKEY_REQUEST_NEG_REPLY:
-        break;
+    break;
 
     case HCI_REMOTE_OOB_DATA_REQUEST_REPLY:
-        break;
+    break;
 
     case HCI_REMOTE_OOB_DATA_REQUEST_NEG_REPLY:
-        break;
+    break;
 
     case HCI_SEND_KEYPRESS_NOTIFICATION:
-        break;
+    break;
 
     case HCI_READ_LOCAL_OOB_DATA:
-        break;
+    break;
 
     case HCI_CREATE_CONNECTION_CANCEL:
-        break;
+    break;
 
     case HCI_DELETE_STORED_LINK_KEY:
-        break;
+    break;
     default:
         //hci_inquiry(0x9e8b33,HCI_INQUIRY_LENGTH_MAX,0);
-        break;
+    break;
     }
 }
 
@@ -419,10 +425,14 @@ static void hci_ev_inquiry_result(hci_ev_inquiry_result_t *ev)
 
 static void hci_ev_conn_complete(hci_ev_conn_complete_t *ev)
 {
-    LOGD("%04x:%02x:%06x Connect Complete %s,handle %x link type %x"
-            " encryption enable %x",
-            ev->bd_addr.nap,ev->bd_addr.uap,ev->bd_addr.lap,
-            hci_error_string(ev->status),ev->handle,ev->link_type,ev->enc_enable);
+    LOGD(__STR_BDADDR " Connect %s,handle %x,link type %x,"
+            "encryption enable %x",
+            __BD_ADDR(ev),
+            hci_error_string(ev->status),
+            ev->handle,
+            ev->link_type,
+            ev->enc_enable);
+
     if(ev->status == HCI_SUCCESS) {
         hci_cbk_alloc(ev->handle,&ev->bd_addr);
     } else {
@@ -432,8 +442,10 @@ static void hci_ev_conn_complete(hci_ev_conn_complete_t *ev)
 
 static void hci_ev_disconnect_complete(hci_ev_disconnect_complete_t *ev)
 {
-    LOGD("Disconnect Complete %s,handle %x,reason %x",
-            hci_error_string(ev->status),ev->handle,ev->reason);
+    LOGD("Disconnect %s,handle %x,reason %x",
+            hci_error_string(ev->status),
+            ev->handle,
+            ev->reason);
     hci_cbk_free(find_hci_cbk(ev->handle));
 }
 
@@ -479,9 +491,9 @@ void hci_event_handler(hci_event_t *event)
         if(event_handlers[event->event_code]) {
             event_handlers[event->event_code](event);
         } else {
-            LOGE("Unhandle Event %x",event->event_code);
+            LOGE("HCI_EV ? %x",event->event_code);
         }
     } else {
-        LOGE("Invalid event code %x",event->event_code);
+        LOGE("HCI_EV code %x",event->event_code);
     }
 }

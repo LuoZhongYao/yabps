@@ -878,6 +878,11 @@ typedef struct {
     __COMMAND;
 }__packed hci_read_local_name_t;
 
+typedef struct {
+    __COMMAND;
+    u8 class_of_device[3];
+} __packed hci_write_class_of_device_t;
+
 void hci_inquiry(u32 lap,u8 inquiry_length,u8 num_responses);
 void hci_accept_connection(bd_addr_t *bd_addr,u8 role);
 void hci_pin_code_req_reply(bd_addr_t *bd_addr,u8 pin_length,u8 *pin);
@@ -889,6 +894,7 @@ void hci_host_buffer_size(u16 acl_packet_length,u8 sco_packet_length,
 void hci_read_local_features(void);
 void hci_write_local_name(const u8 *name,const u16 len);
 void hci_read_local_name(void);
+void hci_write_class_of_device(u32 class_of_device);
 
 
 

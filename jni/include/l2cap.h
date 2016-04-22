@@ -108,8 +108,8 @@ typedef struct {
     u8  payload[0];
 } __packed l2cap_t;
 
-int l2cap_send(l2cap_t *l2cap,u16 handle);
-void l2cap_handler(l2cap_t *l2cap);
+int l2cap_send(u16 handle,l2cap_t *l2cap);
+void l2cap_handler(u16 handle,l2cap_t *l2cap);
 void *alloc_l2cap_packed(l2cap_t **l2cap,u16 length);
 
 typedef struct {
@@ -117,7 +117,7 @@ typedef struct {
     u8 payload[0];
 } __packed l2cap_signaling_t;
 
-void l2cap_signaling_handler(l2cap_signaling_t *sig);
+void l2cap_signaling_handler(u16 handle,l2cap_signaling_t *sig);
 void *alloc_l2cap_signaling_packed(l2cap_signaling_t**sig,u16 length);
 
 typedef struct {
@@ -149,6 +149,18 @@ typedef struct {
     u16 cflag;
     u16 result;
 } __packed l2cap_configure_response_t;
+
+typedef struct {
+    __SIGNALING;
+    u16 info_type;
+} __packed l2cap_information_request_t;
+
+typedef struct {
+    __SIGNALING;
+    u16 info_type;
+    u16 result;
+    u8  data[0];
+} __packed l2cap_information_response_t;
 
 __END_DECLS
 #endif

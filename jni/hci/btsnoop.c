@@ -16,7 +16,7 @@
  *
  ******************************************************************************/
 
-#define TAG "btsnoop"
+#define TAG "ZL.btsnoop"
 
 #include <btsnoop.h>
 #include <assert.h>
