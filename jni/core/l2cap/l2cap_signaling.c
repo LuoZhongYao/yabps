@@ -2,6 +2,7 @@
 
 #include <l2cap.h>
 #include <assert.h>
+#include <byteorder.h>
 #include <zl/log.h>
 #include "l2cap_layer.h"
 
@@ -34,15 +35,23 @@ int l2cap_signaling_send(u16 handle,l2cap_signaling_t *sig)
     return l2cap_send(handle,l2cap);
 }
 
-static void l2cap_configure_response(u16 handle,u8 identifier,u16 scid,u16 result)
+static void l2cap_configure_response(u16 handle,
+                                     u8 identifier,
+                                     u16 remote_cid,
+                                     u16 flags,
+                                     u16 result,
+                                     l2cap_config_option_t *opt,
+                                     u16 length)
 {
     l2cap_configure_response_t *req;
-    alloc_l2cap_signaling_packed((l2cap_signaling_t **)&req,6);
-    req->code = 0x05;
+    alloc_l2cap_signaling_packed((l2cap_signaling_t **)&req,6 + length);
+    req->code       = 0x05;
     req->identifier = identifier;
-    req->length = 6;
-    req->scid = scid;
-    req->result = result;
+    req->length     = cpu_to_le16(6 + length);
+    req->remote_cid = cpu_to_le16(remote_cid);
+    req->cflag      = cpu_to_le16(flags);
+    req->result     = cpu_to_le16(result);
+    memcpy(req->option,opt,length);
     l2cap_signaling_send(handle,(l2cap_signaling_t *)req);
 }
 
@@ -50,13 +59,13 @@ static void l2cap_conn_response(u16 handle,l2cap_cbk_t *cbk,u8 identifier,u16 re
 {
     l2cap_connection_response_t *res;
     alloc_l2cap_signaling_packed((l2cap_signaling_t **)&res,8);
-    res->length = 8;
-    res->status = status;
-    res->code = L2CAP_CONN_RSP;
+    res->length     = cpu_to_le16(8);
+    res->status     = cpu_to_le16(status);
+    res->local_cid  = cpu_to_le16(cbk->local_cid);
+    res->remote_cid = cpu_to_le16(cbk->remote_cid);
+    res->result     = cpu_to_le16(result);
+    res->code       = L2CAP_CONN_RSP;
     res->identifier = identifier;
-    res->dcid = cbk->dcid;
-    res->scid = cbk->scid;
-    res->result = result;
     l2cap_signaling_send(handle,(l2cap_signaling_t *)res);
 }
 
@@ -64,56 +73,66 @@ static void l2cap_information_response(u16 handle,u8 identifier,u16 info_type,u1
 {
     l2cap_information_response_t *res;
     alloc_l2cap_signaling_packed((l2cap_signaling_t **)&res,size + 4);
-    res->length = size + 4;
-    res->info_type = info_type;
     res->identifier = identifier;
-    res->code = L2CAP_INFO_RSP;
-    res->result =result;
+    res->code       = L2CAP_INFO_RSP;
+    res->length     = cpu_to_le16(size + 4);
+    res->info_type  = cpu_to_le16(info_type);
+    res->result     = cpu_to_le16(result);
     memcpy(res->data,data,size);
     l2cap_signaling_send(handle,(l2cap_signaling_t*)res);
 }
 
-static void l2cap_connection_request(u16 handle,u16 scid,u16 psm)
+static void l2cap_connection_request(u16 handle,u16 remote_cid,u16 psm)
 {
     l2cap_connection_request_t *req;
     alloc_l2cap_signaling_packed((l2cap_signaling_t **)&req,4);
-    req->code = 0x02;
-    req->psm = psm;
-    req->length = 0x4;
-    req->scid = scid;
+    req->code        = 0x02;
+    req->length      = cpu_to_le16(4);
+    req->psm         = cpu_to_le16(psm);
+    req->remote_cid  = cpu_to_le16(remote_cid);
     l2cap_signaling_send(handle,(l2cap_signaling_t *)req);
 }
 
-static void l2cap_configure_request(u16 handle,u16 dcid,u16 cflag,u8 mtu_type,
-        u8 mtu_length,u16 max_mtu)
+static void l2cap_configure_request(u16 handle,
+                                    u16 local_cid,
+                                    u16 cflag,
+                                    l2cap_config_option_t *opt,
+                                    u16 length)
 {
     l2cap_configure_request_t *req;
-    alloc_l2cap_signaling_packed((l2cap_signaling_t **)&req,8);
-    req->code = 0x04;
-    req->length = 8;
-    req->dcid = dcid;
-    req->cflag = cflag;
-    req->mtu_type = mtu_type;
-    req->mtu_length = mtu_length;
-    req->max_mtu = max_mtu;
+    alloc_l2cap_signaling_packed((l2cap_signaling_t **)&req,4 + length);
+    req->code        = 0x04;
+    req->length      = cpu_to_le16(4 + length);
+    req->local_cid   = cpu_to_le16(local_cid);
+    req->cflag       = cpu_to_le16(cflag);
+    memcpy(req->option,opt,length);
     l2cap_signaling_send(handle,(l2cap_signaling_t *)req);
 }
 
 
 static void l2cap_handle_conn_req(u16 handle,l2cap_connection_request_t *req)
 {
-    l2cap_listen_t *listen = find_l2cap_listen(req->psm);
-    if(listen == NULL) {
-        LOGD("psm %x,scid %x",req->psm,req->scid);
+    req->psm  = le16_to_cpu(req->psm);
+    req->remote_cid = le16_to_cpu(req->remote_cid);
+
+    struct l2cap_protocol *protocol = find_protocol_psm(req->psm);
+    if(protocol == NULL) {
+        LOGD("psm %x,remote_cid %x",req->psm,req->remote_cid);
     } else {
-        l2cap_cbk_t *cbk = l2cap_alloc_cbk(listen,req->scid,L2CAP_CONFIG);
+        l2cap_cbk_t *cbk = l2cap_alloc_cbk(req->remote_cid,L2CAP_CONFIG,protocol->task);
+        l2cap_config_option_t *opt = malloc(sizeof(l2cap_config_option_t) + 2);
+        opt->length = 2;
+        opt->type = L2CAP_CFG_MTU;
+        *(u16*)opt->data = cpu_to_le16(672);
         l2cap_conn_response(handle,cbk,req->identifier,L2CAP_CONN_SUCCESS,0);
-        /*l2cap_configure_request(handle,req->scid,0,1,2,1024);*/
+        l2cap_configure_request(handle,req->remote_cid,0,opt,4);
+        free(opt);
     }
 }
 
 static void l2cap_handle_information_req(u16 handle,l2cap_information_request_t *req)
 {
+    req->info_type = le16_to_cpu(req->info_type);
     switch(req->info_type) {
     case 1:  {/* connectionless MTU */
         u16 mtu = 1024;
@@ -130,26 +149,83 @@ static void l2cap_handle_information_req(u16 handle,l2cap_information_request_t 
     }
 }
 
+static void l2cap_handle_configure_req(u16 handle,l2cap_configure_request_t *req)
+{
+    req->local_cid  = le16_to_cpu(req->local_cid);
+    req->cflag = le16_to_cpu(req->cflag);
+
+    l2cap_cbk_t *l2c = find_l2cap_cbk(req->local_cid);
+    l2cap_config_option_t *opt = req->option;
+    const void *opt_end = (void*)opt + req->length;
+
+    while((void*)opt < opt_end) {
+        switch(opt->type & 0x7F) {
+        case L2CAP_CFG_MTU: {
+            LOGD("MTU : %d\n",le16_to_cpu(((u16 *)opt->data)[0]));
+            l2cap_configure_response (
+                                      handle,
+                                      req->identifier,
+                                      l2c->remote_cid,
+                                      req->cflag,
+                                      L2CAP_CFG_SUCCESS,
+                                      opt,
+                                      2 + L2CAP_CFG_MTU_LEN);
+        } break;
+
+        case L2CAP_CFG_FLUSHTO: {
+            LOGD("FLUSH TIMEOUT : %d\n",le16_to_cpu(((u16 *)opt->data)[0]));
+        } break;
+
+        case L2CAP_CFG_QOS: {
+            LOGD("QOS\n");
+        } break;
+
+        case L2CAP_CFG_FCR: {
+            LOGD("FCR\n");
+        } break;
+
+        case L2CAP_CFG_FCS: {
+            LOGD("FCS\n");
+        } break;
+
+        case L2CAP_CFG_EXT_FLOW: {
+            LOGD("EXT_FLOW\n");
+        } break; 
+
+        case L2CAP_CFG_EXT_WIN_SIZE: {
+            LOGD("WIN_SIZE\n");
+        } break;
+        }
+        opt = (void*)opt + opt->length + L2CAP_CFG_OVERHEAD; 
+    }
+}
+
 void l2cap_signaling_handler(u16 handle,l2cap_signaling_t *sig)
 {
+    sig->length = le16_to_cpu(sig->length);
+
 #define SIG_INST(t) t * msg =  (t *)sig
     switch(sig->code) {
     case L2CAP_CONN_REQ: {
         SIG_INST(l2cap_connection_request_t);
-        LOGD("L2CAP_CONN_REQ : psm %x,scid %x\n",msg->psm,msg->scid);
+        LOGD("L2CAP_CONN_REQ : psm %x,remote_cid %x\n",msg->psm,msg->remote_cid);
         l2cap_handle_conn_req(handle,msg);
     } break;
 
     case L2CAP_CONN_RSP: {
         SIG_INST(l2cap_connection_response_t);
-        LOGD("L2CAP_CONN_RSP : dcid %x,scid %x,result %x,status %x\n",
-             msg->dcid,msg->scid,msg->result,msg->status);
+        LOGD("L2CAP_CONN_RSP : local_cid %x,remote_cid %x,result %x,status %x\n",
+             msg->local_cid,msg->remote_cid,msg->result,msg->status);
     } break;
 
     case L2CAP_CFG_REQ: {
         SIG_INST(l2cap_configure_request_t);
-        LOGD("L2CAP_CFG_REQ : dcid %x,cflags %x,mtu_type %x,mut_length %x,max_mut %x\n",
-             msg->dcid,msg->cflag,msg->mtu_type,msg->mtu_length,msg->max_mtu);
+        LOGD("L2CAP_CFG_REQ : local_cid %x,cflags %x\n", msg->local_cid,msg->cflag);
+        l2cap_handle_configure_req(handle,msg);
+    } break;
+
+    case L2CAP_CFG_RSP: {
+        LOGD("L2CAP_CFG_RSP\n");
     } break;
 
     case L2CAP_INFO_REQ: {
@@ -158,8 +234,12 @@ void l2cap_signaling_handler(u16 handle,l2cap_signaling_t *sig)
         l2cap_handle_information_req(handle,msg);
     } break;
 
+    case L2CAP_DISCONN_REQ: {
+        LOGD("L2CAP_DISCONN_REQ\n");
+    } break;
+
     default:
-        LOGE("L2CAP ? %x,identifier %x,%x\n",
+        LOGE("SIG ? %x,identifier %x,%x\n",
              sig->code,sig->identifier,sig->length);
         break;
     }

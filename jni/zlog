@@ -1,2 +1,12 @@
 #!/bin/bash
-adb logcat | grep 'ZL\.'
+set -x
+
+if [ $# != 0 ];then
+    lookup="ZLLZ"
+    for a in $*;do
+        lookup=$lookup"\|\($a\)"
+    done
+fi
+lookup="ZL\."$lookup
+
+adb -s 20080411 logcat | grep "$lookup"

@@ -12,8 +12,11 @@
 #include <drv.h>
 #include <hci.h>
 #include <l2cap.h>
+#include <sdp.h>
 #include <zl/types.h>
 #include <timer.h>
+
+#define work_loop() while(1) sleep(1)
 
 
 extern int serial_open(const char *path);
@@ -69,9 +72,10 @@ int main(int argc,char **argv) {
     /************ ***********************/
     serial_start();
     abcsp_init();
-    register_l2cap_listen(SDP_PSM,NULL,NULL);
-    while(1) 
-        sleep(1);
+    sdp_init();
+
+    work_loop();
+
     serial_stop();
     return 0;
 }

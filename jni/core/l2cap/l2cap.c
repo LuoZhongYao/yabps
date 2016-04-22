@@ -1,13 +1,15 @@
 #define TAG "ZL.L2CAP"
 
+#include <byteorder.h>
 #include <zl/types.h>
 #include <zl/log.h>
 #include <zl/util.h>
 #include <l2cap.h>
 #include <acl.h>
 #include <hci.h>
-#include "l2cap_layer.h"
 #include <assert.h>
+
+#include "l2cap_layer.h"
 
 int l2cap_send(u16 handle,l2cap_t *l2cap)
 {
@@ -51,22 +53,29 @@ void *alloc_l2cap_packed(l2cap_t **l2cap,u16 length)
 
 void l2cap_handler(u16 handle,l2cap_t *l2cap)
 {
+    l2cap->cid    = le16_to_cpu(l2cap->cid);
+    l2cap->length = le16_to_cpu(l2cap->length);
+
     switch(l2cap->cid) {
+
     case L2CAP_SIG_CID:
         l2cap_signaling_handler(handle,(l2cap_signaling_t*)l2cap->payload);
-        break;
+    break;
+
     case L2CAP_CONNLESS_CID:
-        break;
+    break;
+
     default:
         {
             l2cap_cbk_t *l2c = find_l2cap_cbk(l2cap->cid);
+            l2c->task(l2c,l2cap);
             if(l2c) {
                 LOGD("state %x",l2c->state);
             } else {
                 LOGD("L2CAP_CID ? %x",l2cap->cid);
             }
         }
-        break;
+    break;
     }
     __test_delete(l2cap);
 }

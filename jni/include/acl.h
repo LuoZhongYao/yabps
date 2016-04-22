@@ -14,8 +14,10 @@ __BEGIN_DECLS
 #define MAX_ACL_LINKS     7
 
 typedef struct {
-    u16 handle:12;
-    u16 flags:4;
+    union {
+        struct { u16 handle:12; u16 flags:4; };
+        u16 union_handle;
+    };
     u16 length;
     u8 payload[0];
 }__packed acl_t;

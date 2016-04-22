@@ -5,6 +5,7 @@
 #include <hci.h>
 #include <zl/log.h>
 #include <zl/util.h>
+#include <byteorder.h>
 #include "hci_layer.h"
 #include <assert.h>
 
@@ -17,15 +18,20 @@ acl_t *alloc_acl_packed(u16 length) {
 void acl_handler(acl_t *acl)
 {
     hci_cbk_t *cbk;
-    l2cap_t *l2cap;
+    l2cap_t *l2cap = NULL;
     u16 length;
+
+    acl->length = le16_to_cpu(acl->length);
+    acl->union_handle = le16_to_cpu(acl->union_handle);
     cbk = find_hci_cbk(acl->handle);
+
     if(cbk == NULL) {
         LOGE("Can't found acl connection");
         return;
     }
 
     LOGD("handle %x,flags %x",acl->handle,acl->flags);
+
     if(acl->flags == 0x2) {
         l2cap = (void*)acl->payload;
         __test_delete(cbk->blk);
